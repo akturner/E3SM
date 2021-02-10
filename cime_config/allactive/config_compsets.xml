@@ -16,7 +16,7 @@
     TIME = Time period (e.g. 2000, HIST, RCP8...)
     ATM  = [EAM, SATM]
     LND  = [ELM,  SLND]
-    ICE  = [MPASSI, CICE, DICE, SICE]
+    ICE  = [MPASSI, CICE, DEMSI, DICE, SICE]
     OCN  = [MPASO, DOCN, SOCN]
     ROF  = [MOSART, SROF]
     GLC  = [MALI, SGLC]

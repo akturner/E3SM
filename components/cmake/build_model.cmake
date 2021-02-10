@@ -25,11 +25,26 @@ function(build_model COMP_CLASS COMP_NAME)
     set(CPPDEFS "${CPPDEFS} ${CCSM_CPPDEFS}")
   endif()
 
+  # component include directories
   if (COMP_NAME STREQUAL "cpl")
+
+    # MPAS
     list(APPEND INCLDIR "${EXEROOT}/cmake-bld/mpas-source/src")
+
+    # DEMSI
+    list(APPEND INCLDIR "${EXEROOT}/cmake-bld/demsi/driver")
+    list(APPEND INCLDIR "${EXEROOT}/cmake-bld/demsi/driver")
+    list(APPEND INCLDIR "${EXEROOT}/cmake-bld/demsi/DEMSI/model/src/")
+    list(APPEND INCLDIR "${EXEROOT}/cmake-bld/demsi/DEMSI/model/build/LAMMPS-install/include")
+    list(APPEND INCLDIR "${EXEROOT}/cmake-bld/demsi/DEMSI/model/build/petsc-install/include")
+    list(APPEND INCLDIR "${EXEROOT}/cmake-bld/demsi/DEMSI/model/build/permon-install/include")
+    list(APPEND INCLDIR "${EXEROOT}/cmake-bld/demsi/DEMSI/model/build/tinyxml2-install/include")
+
+    # Other
     foreach(ITEM IN LISTS COMP_CLASSES)
       list(APPEND INCLDIR "${EXEROOT}/cmake-bld/cmake/${ITEM}")
     endforeach()
+
   endif()
 
   # Source files don't live in components/cmake/$COMP_CLASS. This path won't work for
@@ -236,11 +251,23 @@ function(build_model COMP_CLASS COMP_NAME)
     foreach(ITEM IN LISTS COMP_CLASSES)
       if (NOT ITEM STREQUAL "cpl")
         target_link_libraries(${TARGET_NAME} ${ITEM})
+	message("***CPL target_link_libraries 1: ${ITEM}")
       endif()
     endforeach()
     foreach(ITEM IN LISTS ALL_LIBS_LIST)
       target_link_libraries(${TARGET_NAME} ${ITEM})
+      message("***CPL target_link_libraries 2: ${ITEM}")
     endforeach()
+    target_link_libraries(${TARGET_NAME} "${EXEROOT}/cmake-bld/demsi/DEMSI/model/build/src-install/libdemsilib.so")
+    target_link_libraries(${TARGET_NAME} "${EXEROOT}/cmake-bld/demsi/DEMSI/model/build/LAMMPS-install/lib/liblammps.so")
+    target_link_libraries(${TARGET_NAME} "${EXEROOT}/cmake-bld/demsi/DEMSI/model/build/LAMMPS-install/lib/libkokkoscontainers.so")
+    target_link_libraries(${TARGET_NAME} "${EXEROOT}/cmake-bld/demsi/DEMSI/model/build/LAMMPS-install/lib/libkokkoscore.so")
+    target_link_libraries(${TARGET_NAME} "${EXEROOT}/cmake-bld/demsi/DEMSI/model/build/petsc-install/lib/libpetsc.so")
+    target_link_libraries(${TARGET_NAME} "${EXEROOT}/cmake-bld/demsi/DEMSI/model/build/petsc-install/lib/libflapack.a")
+    target_link_libraries(${TARGET_NAME} "${EXEROOT}/cmake-bld/demsi/DEMSI/model/build/petsc-install/lib/libfblas.a")
+    target_link_libraries(${TARGET_NAME} "${EXEROOT}/cmake-bld/demsi/DEMSI/model/build/permon-install/lib/libpermon.so")
+    target_link_libraries(${TARGET_NAME} "${EXEROOT}/cmake-bld/demsi/DEMSI/model/build/tinyxml2-install/lib/libtinyxml2.so")
+    target_link_libraries(${TARGET_NAME} "-ldl -lstdc++ -lmpi_cxx -lmpi")
     set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE ${LD})
   else()
     set(TARGET_NAME ${COMP_CLASS})
