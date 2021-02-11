@@ -32,8 +32,8 @@ add_custom_command(
   DEPENDS ice_comp_mct.F)
 
 add_dependencies(ice demsilib)
-target_include_directories(ice PUBLIC "../DEMSI/model/src/")
-target_link_libraries(ice PUBLIC "../DEMSI/model/src/")
+target_include_directories(ice PUBLIC "${EXEROOT}/cmake-bld/demsi/DEMSI/model/src/")
+target_link_libraries(ice PUBLIC "${EXEROOT}/cmake-bld/demsi/DEMSI/model/build/src-install/libdemsilib.so")
 
 include_directories(${CMAKE_BINARY_DIR}/demsi/driver/)
 link_directories(${CMAKE_BINARY_DIR}/demsi/driver/)
