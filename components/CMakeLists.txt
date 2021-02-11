@@ -70,6 +70,9 @@ set(BUILDCONF ${CASEROOT}/Buildconf)
 # Do any MPAS builds first since they manage their own flags
 build_mpas_models()
 
+# Build DEMSI
+add_subdirectory(demsi)
+
 # Set global cmake settings
 set(CMAKE_MODULE_PATH ${CIMEROOT}/src/CMake)
 set(CMAKE_VERBOSE_MAKEFILE TRUE)
@@ -82,7 +85,7 @@ add_custom_target(genf90
 # Build E3SM components
 set(IDX 0)
 set(COMP_CLASSES cpl atm lnd ice ocn rof glc wav iac esp)
-set(MPAS_COMPS "mpaso" "mpassi" "mali")
+set(MPAS_COMPS "mpaso" "mpassi" "mali" "demsi")
 foreach(COMP_NAME IN LISTS COMP_NAMES)
   list(GET COMP_CLASSES ${IDX} COMP_CLASS)
   if (NOT COMP_CLASS STREQUAL "cpl" AND NOT COMP_NAME IN_LIST MPAS_COMPS)

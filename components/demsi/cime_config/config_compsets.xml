@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+
+<compsets>
+
+   <help>
+   Compset format is explained in cime/config/e3sm/allactive/config_compsets.xml
+   or in the CIME documenation
+   </help>
+
+  <!-- E3SM D compsets -->
+
+  <compset>
+    <alias>DTESTD</alias>
+    <lname>2000_DATM%NYF_SLND_DEMSI_DOCN%SOM_DROF%NYF_SGLC_SWAV_TEST</lname>
+  </compset>
+
+</compsets>
