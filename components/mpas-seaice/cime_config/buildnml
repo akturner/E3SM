@@ -665,6 +665,7 @@ def buildnml(case, caseroot, compname):
         lines.append('    <var name="energyConsFreezingPotential"/>')
         lines.append('    <var name="energyConsSnowfallHeat"/>')
         lines.append('    <var name="energyConsLatentHeat"/>')
+        lines.append('    <var name="energyConsLatentHeat2"/>')
         lines.append('    <var name="netEnergyFlux"/>')
         lines.append('    <var name="absoluteEnergyError"/>')
         lines.append('    <var name="relativeEnergyError"/>')
