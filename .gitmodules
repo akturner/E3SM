@@ -64,3 +64,6 @@
 [submodule "components/mpas-ocean/src/ppr"]
 	path = components/mpas-ocean/src/ppr
 	url = https://github.com/dengwirda/PPR.git
+[submodule "components/mpas-seaice/src/icepack"]
+	path = components/mpas-seaice/src/icepack
+	url = git@github.com:eclare108213/Icepack.git
