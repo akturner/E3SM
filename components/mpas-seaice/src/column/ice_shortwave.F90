@@ -60,8 +60,14 @@
          hpmin  = 0.005_dbl_kind, & ! minimum allowed melt pond depth (m)
          hp0    = 0.200_dbl_kind    ! pond depth below which transition to bare ice
 
+      real (kind=dbl_kind), parameter :: &
+         exp_argmax = c10    ! maximum argument of exponential
+
       real (kind=dbl_kind) :: &
          exp_min                    ! minimum exponential value
+
+      real (kind=dbl_kind), parameter :: &  ! # 127
+           argmax = c10    ! maximum argument of exponential ! # 127
 
 !=======================================================================
 
@@ -926,15 +932,10 @@
       logical (kind=log_kind) :: &
          linitonly       ! local initonly value
 
-      real (kind=dbl_kind), parameter :: & 
-         argmax = c10    ! maximum argument of exponential
-
       linitonly = .false.
       if (present(initonly)) then
          linitonly = initonly
       endif
-
-      exp_min = exp(-argmax)
 
       ! cosine of the zenith angle
          call compute_coszen (tlat,          tlon, &
@@ -984,7 +985,7 @@
                apeffn(n) = fpn ! for history
             elseif (tr_pond_lvl) then
                hsnlvl = hsn ! initialize
-               if (trim(snwredist) == '30percentsw') then
+               if (trim(snwredist) == '30percentsw') then ! akt
                   hsnlvl = hsn / (c1 + snwlvlfac*(c1-alvln(n)))
                   ! snow volume over level ice
                   alvl = aicen(n) * alvln(n)
@@ -1146,7 +1147,7 @@
          if (.not. tr_rsnw) then
            rnslyr = c1/max(c1,(real(nslyr,kind=dbl_kind)))
            do k = 1,nslyr
-             rsnw_dEddn(n) = rsnw_dEddn(n) + rsnwn(k)*rnslyr
+             rsnw_dEddn(n) = rsnw_dEddn(n) + rsnwn(k)*rnslyr ! akt
            enddo
          endif
 
@@ -2397,13 +2398,13 @@
                 
                  ! get grain size index:
                  ! works for 25 < snw_rds < 1625 um:
-                 if (tmp_gs < 125) then
-                   tmp1 = tmp_gs/50
+                 if (tmp_gs < 125.0_dbl_kind) then
+                   tmp1 = tmp_gs/50.0_dbl_kind
                    k_bcini(k) = nint(tmp1)
-                 elseif (tmp_gs < 175) then
+                 elseif (tmp_gs < 175.0_dbl_kind) then
                    k_bcini(k) = 2
                  else
-                   tmp1 = (tmp_gs/250)+2
+                   tmp1 = (tmp_gs/250.0_dbl_kind)+2
                    k_bcini(k) = nint(tmp1)
                  endif
               else                  ! use the largest snow grain size for ice
@@ -2546,10 +2547,16 @@
             ! aerosol in snow
              if (tr_zaero .and. dEdd_algae) then
                do k = 0,nslyr
-                  g(k)   = (g(k)*w0(k)*tau(k) + gzaer(ns,k)) / &
-                                  (w0(k)*tau(k) + wzaer(ns,k))
-                  w0(k)  = (w0(k)*tau(k) + wzaer(ns,k)) / &
-                                   (tau(k) + tzaer(ns,k))
+                  gzaer(ns,k) = gzaer(ns,k)/(wzaer(ns,k)+puny)
+                  wzaer(ns,k) = wzaer(ns,k)/(tzaer(ns,k)+puny)
+                  g  (k) = (g (k)*w0(k)*tau(k) + gzaer(ns,k)*wzaer(ns,k)*tzaer(ns,k)) &
+                         /       (w0(k)*tau(k) +             wzaer(ns,k)*tzaer(ns,k))
+                  w0 (k) = (      w0(k)*tau(k) +             wzaer(ns,k)*tzaer(ns,k)) &
+                         /       (      tau(k) +                         tzaer(ns,k))
+                  !g(k)   = (g(k)*w0(k)*tau(k) + gzaer(ns,k)) / &
+                  !                (w0(k)*tau(k) + wzaer(ns,k))
+                  !w0(k)  = (w0(k)*tau(k) + wzaer(ns,k)) / &
+                  !                 (tau(k) + tzaer(ns,k))
                   tau(k) = tau(k) + tzaer(ns,k)
                enddo
              elseif (tr_aero) then
@@ -3347,7 +3354,10 @@
          tdr      , & ! tdir for gaussian integration
          smr      , & ! accumulator for rdif gaussian integration
          smt          ! accumulator for tdif gaussian integration
- 
+
+      real (kind=dbl_kind) :: & ! # 127
+         exp_min                    ! minimum exponential value ! # 127
+
       ! Delta-Eddington solution expressions
       alpha(w,uu,gg,e) = p75*w*uu*((c1 + gg*(c1-w))/(c1 - e*e*uu*uu))
       agamm(w,uu,gg,e) = p5*w*((c1 + c3*gg*(c1-w)*uu*uu)/(c1-e*e*uu*uu))
@@ -3385,7 +3395,7 @@
       ! value below the fresnel level, i.e. the cosine solar zenith 
       ! angle below the fresnel level for the refracted solar beam:
       mu0nij = sqrt(c1-((c1-mu0**2)/(refindx*refindx)))
- 
+
       ! compute level of fresnel refraction
       ! if ponded sea ice, fresnel level is the top of the pond.
       kfrsnl = 0
@@ -3434,7 +3444,9 @@
             ! non-refracted beam instead
             if( srftyp < 2 .and. k < kfrsnl ) mu0n = mu0
 
-            extins = max(exp_min, exp(-lm*ts))
+            !extins = max(exp_min, exp(-lm*ts)) ! # 127
+            exp_min = min(exp_argmax,lm*ts) ! # 127
+            extins = exp(-exp_min) ! # 127
             ne = n(ue,extins)
 
             ! first calculation of rdif, tdif using Delta-Eddington formulas
@@ -3443,7 +3455,9 @@
             tdif_a(k) = c4*ue/ne
 
             ! evaluate rdir,tdir for direct beam
-            trnlay(k) = max(exp_min, exp(-ts/mu0n))
+            !trnlay(k) = max(exp_min, exp(-ts/mu0n)) ! # 127
+            exp_min = min(exp_argmax,ts/mu0n) ! # 127
+            trnlay(k) = exp(-exp_min) ! # 127
             alp = alpha(ws,mu0n,gs,lm)
             gam = agamm(ws,mu0n,gs,lm)
             apg = alp + gam
@@ -3464,7 +3478,9 @@
                mu  = gauspt(ng)
                gwt = gauswt(ng)
                swt = swt + mu*gwt
-               trn = max(exp_min, exp(-ts/mu))
+               !trn = max(exp_min, exp(-ts/mu)) ! # 127
+               exp_min = min(exp_argmax,ts/mu) ! # 127
+               trn = exp(-exp_min) ! # 127
                alp = alpha(ws,mu,gs,lm)
                gam = agamm(ws,mu,gs,lm)
                apg = alp + gam
@@ -3591,7 +3607,7 @@
       !       ---------------------
 
       rupdir(klevp) = albodr
-      rupdif(klevp) = albodf 
+      rupdif(klevp) = albodf
 
       do k=klev,0,-1
          ! interface scattering
@@ -3639,7 +3655,7 @@
          Tsfc   , & ! surface temperature 
          hs0        ! snow depth for transition to bare sea ice (m)
 
-      real (kind=dbl_kind), intent(out) :: &
+      real (kind=dbl_kind), intent(inout) :: & ! # 227
          fs     , & ! horizontal coverage of snow
          hs         ! snow depth
 
@@ -3678,12 +3694,11 @@
          fs = c1
          if (hs0 > puny) fs = min(hs/hs0, c1)
       endif
-      
       if (tr_rsnw) then  !use snow grain tracer
 
           do ks = 1, nslyr
             rsnw(ks)   = max(rsnw_fall,rsnow(ks))
-            rsnw(ks)   = min(rsnw_tmax,rsnw(ks))
+            rsnw(ks)   = min(rsnw_tmax,rsnow(ks))
             rhosnw(ks) = rhos
           enddo
 
@@ -3696,7 +3711,7 @@
         ! the sign is negative so that if R_snw is 1, then the
         ! snow grain radius is reduced and thus albedo increased.
         rsnw_nm = rsnw_nonmelt - R_snw*rsnw_sig
-        rsnw_nm = max(rsnw_nm, rsnw_fresh)
+        rsnw_nm = max(rsnw_nm, rsnw_fall)
         rsnw_nm = min(rsnw_nm, rsnw_mlt) 
       
         do ks = 1, nslyr
@@ -3704,7 +3719,7 @@
            rhosnw(ks) = rhos
            ! snow grain radius between rsnw_nonmelt and rsnw_mlt
            rsnw(ks) = rsnw_nm + (rsnw_mlt-rsnw_nm)*fT
-           rsnw(ks) = max(rsnw(ks), rsnw_fresh)
+           rsnw(ks) = max(rsnw(ks), rsnw_fall)
            rsnw(ks) = min(rsnw(ks), rsnw_mlt)
         enddo        ! ks
 
@@ -3838,7 +3853,7 @@
       if (sw_grid(1)*hin*c2 > hi_ssl .and. hin > puny) then
          icegrid(1) = hi_ssl/c2/hin
       endif
-      icegrid(2) = c2*sw_grid(1) + (sw_grid(2) - sw_grid(1))
+      !icegrid(2) = c2*sw_grid(1) + (sw_grid(2) - sw_grid(1))
       if (z_tracers) then
       if (tr_bgc_N)  then
          do k = 1, nblyr+1
@@ -5392,17 +5407,17 @@
       ! Note: nilyr = nslyr = 1 for this case
       !----------------------------------------------------------------
 
-      if (.not. heat_capacity) then
+      !if (.not. heat_capacity) then
 
-         ! SW absorbed at snow/ice surface
-         fswsfc = fswsfc + Iswabs(1) + Sswabs(1)
+      !   ! SW absorbed at snow/ice surface
+      !   fswsfc = fswsfc + Iswabs(1) + Sswabs(1)
 
-         ! SW absorbed in ice interior
-         fswint   = c0
-         Iswabs(1) = c0
-         Sswabs(1) = c0
+      !   ! SW absorbed in ice interior
+      !   fswint   = c0
+      !   Iswabs(1) = c0
+      !   Sswabs(1) = c0
 
-      endif                       ! heat_capacity
+      !endif                       ! heat_capacity
 
       end subroutine compute_dEdd_5bd
 
