@@ -21,6 +21,7 @@ module seaice_initialize
   use mpas_abort
   use mpas_log, only: mpas_log_write
   use mpas_timer, only: mpas_timer_start, mpas_timer_stop
+  use seaice_partition, only: seaice_block_iterator
 
   implicit none
 
@@ -50,6 +51,7 @@ contains
        clock, &
        dt)!{{{
 
+    use seaice_partition, only: seaice_init_block_iterator
     use seaice_mesh, only: seaice_init_mesh
     use seaice_advection, only: seaice_init_advection
     use seaice_velocity_solver, only: seaice_init_velocity_solver
@@ -59,8 +61,8 @@ contains
     use seaice_forcing, only: seaice_forcing_init, seaice_reset_coupler_fluxes
     use seaice_diagnostics, only: &
          seaice_set_testing_system_test_arrays
-    use seaice_mesh_pool, only: &
-         seaice_mesh_pool_create
+    !use seaice_mesh_pool, only: &
+    !     seaice_mesh_pool_create
     use seaice_prescribed, only: &
          seaice_init_prescribed_ice
     use seaice_special_boundaries, only: &
@@ -81,6 +83,8 @@ contains
 
     call mpas_log_write("seaice_init: Initialize sea-ice model")
 
+    call seaice_init_block_iterator(domain)
+
     ! init testing system test arrays
     call seaice_set_testing_system_test_arrays(domain)
 
@@ -100,8 +104,8 @@ contains
     call mpas_log_write(" Initialize mesh...")
     call seaice_init_mesh(domain)
 
-    call mpas_log_write(" Initialize mesh pool...")
-    call seaice_mesh_pool_create(domain)
+    !call mpas_log_write(" Initialize mesh pool...")
+    !call seaice_mesh_pool_create(domain)
 
     ! init the basic column physics package
     call mpas_log_write(" Initialize column parameters...")
@@ -221,7 +225,7 @@ contains
          areaCell
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
 
@@ -297,7 +301,7 @@ contains
 
        ! set volumes/areas
        block => domain % blocklist
-       do while (associated(block))
+       do while (seaice_block_iterator(block))
 
           if (trim(config_initial_condition_type) == "uniform") then
 
@@ -382,7 +386,7 @@ contains
 
        ! other initialize variables
        block => domain % blocklist
-       do while (associated(block))
+       do while (seaice_block_iterator(block))
           call MPAS_pool_get_subpool(block % structs, "icestate", icestate)
           call MPAS_pool_get_subpool(block % structs, "tracers_aggregate", tracers_aggregate)
           call MPAS_pool_get_array(icestate, "iceAreaCellInitial", iceAreaCellInitial)
@@ -393,7 +397,7 @@ contains
 
        ! set velocities
        block => domain % blocklist
-       do while (associated(block))
+       do while (seaice_block_iterator(block))
 
           if (trim(config_initial_velocity_type) == "uniform") then
 
@@ -2023,7 +2027,7 @@ contains
          indexj
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        !-------------------------------------------------------------
        ! Physics fluxes received from atmosphere
@@ -2231,7 +2235,7 @@ contains
        lonLimitEast = lonLimitEast + 360.0_RKIND
 
        block => domain % blocklist
-       do while (associated(block))
+       do while (seaice_block_iterator(block))
 
           call MPAS_pool_get_subpool(block % structs, "ocean_coupling", oceanCouplingPool)
           call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)

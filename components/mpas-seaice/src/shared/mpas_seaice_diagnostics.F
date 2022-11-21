@@ -17,6 +17,7 @@ module seaice_diagnostics
   use mpas_timekeeping
   use mpas_io_units
   use mpas_log, only: mpas_log_write
+  use seaice_partition, only: seaice_block_iterator
 
   implicit none
 
@@ -133,7 +134,7 @@ contains
          ierr
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_subpool(block % structs, "diagnostics", diagnosticsPool)
 
@@ -242,7 +243,7 @@ contains
        errorFlag = .false.
 
        block => domain % blocklist
-       do while (associated(block))
+       do while (seaice_block_iterator(block))
 
           call MPAS_pool_get_subpool(block % structs, "velocity_solver", velocitySolverPool)
           call MPAS_pool_get_subpool(block % structs, "tracers", tracersPool)
@@ -300,7 +301,7 @@ contains
           endif
 
           block => domain % blocklist
-          do while (associated(block))
+          do while (seaice_block_iterator(block))
 
              call MPAS_pool_get_subpool(block % structs, "diagnostics", diagnosticsPool)
              call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)
@@ -449,7 +450,7 @@ contains
     if (config_testing_system_test) then
 
        block => domain % blocklist
-       do while (associated(block))
+       do while (seaice_block_iterator(block))
 
           call MPAS_pool_get_dimension(block % dimensions, "nCellsSolve", nCellsSolve)
 

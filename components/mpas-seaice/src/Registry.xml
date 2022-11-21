@@ -398,6 +398,10 @@
 			description="Determines if mpi barriers are used and timed before halo exchanges."
 			possible_values=".true. or .false."
 		/>
+		<nml_option name="config_use_even_blocks_only" type="logical" default_value="false" units="unitless"
+			description=""
+			possible_values=".true. or .false."
+		/>
 	</nml_record>
 	<nml_record name="restart" in_defaults="true">
 		<nml_option name="config_do_restart" type="logical" default_value="false" units="unitless"
@@ -5402,6 +5406,14 @@
 		<var name="timeAverageTestVariable"
 		     type="real"
 		     dimensions="Time"
+		/>
+		<var name="cellActive"
+		     type="integer"
+		     dimensions="nCells Time"
+		/>
+		<var name="cellEvenness"
+		     type="integer"
+		     dimensions="nCells Time"
 		/>
 	</var_struct>
 

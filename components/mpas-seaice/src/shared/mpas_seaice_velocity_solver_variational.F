@@ -12,7 +12,7 @@
 
 module seaice_velocity_solver_variational
 
-#include "gpu_macros.inc"
+!#include "gpu_macros.inc"
 
   use mpas_derived_types
   use mpas_pool_routines
@@ -584,10 +584,10 @@ contains
        tanLatVertexRotatedOverRadius, &
        solveStress)!{{{
 
-    use seaice_mesh_pool, only: &
-         nCells, &
-         verticesOnCell, &
-         nEdgesOnCell
+    !use seaice_mesh_pool, only: &
+    !     nCells, &
+    !     verticesOnCell, &
+    !     nEdgesOnCell
 
     type(MPAS_pool_type), pointer, intent(in) :: &
          mesh !< Input:
@@ -620,6 +620,19 @@ contains
          strain11Tmp, &
          strain22Tmp, &
          strain12Tmp
+
+    integer, pointer :: &
+         nCells
+
+    integer, dimension(:), pointer :: &
+         nEdgesOnCell
+
+    integer, dimension(:,:), pointer :: &
+         verticesOnCell
+
+    call mpas_pool_get_dimension(mesh, "nCells", nCells)
+    call mpas_pool_get_array(mesh, "nEdgesOnCell", nEdgesOnCell)
+    call mpas_pool_get_array(mesh, "verticesOnCell", verticesOnCell)
 
     ! loop over cells
 #ifdef MPAS_OPENMP_OFFLOAD
@@ -797,9 +810,9 @@ contains
          seaice_linear_constitutive_relation, &
          eccentricitySquared, puny, dampingTimescale
 
-    use seaice_mesh_pool, only: &
-         nCells, &
-         nEdgesOnCell
+    !use seaice_mesh_pool, only: &
+    !     nCells, &
+    !     nEdgesOnCell
 
     type(MPAS_pool_type), pointer, intent(in) :: &
          mesh !< Input:
@@ -843,7 +856,15 @@ contains
          pressureCoefficient, &
          denominator
 
+    integer, pointer :: &
+         nCells
+
+    integer, dimension(:), pointer :: &
+         nEdgesOnCell
+
     ! init variables
+    call MPAS_pool_get_dimension(mesh, "nCells", nCells)
+    call MPAS_pool_get_array(mesh, "nEdgesOnCell", nEdgesOnCell)
     call MPAS_pool_get_array(mesh, "areaCell", areaCell)
 
     if (constitutiveRelationType == EVP_CONSTITUTIVE_RELATION) then
@@ -1076,12 +1097,12 @@ contains
        cellVerticesAtVertex, &
        solveVelocity)!{{{
 
-    use seaice_mesh_pool, only: &
-         nVerticesSolve, &
-         cellsOnVertex, &
-         nEdgesOnCell, &
-         areaTriangle, &
-         vertexDegree
+    !use seaice_mesh_pool, only: &
+    !     nVerticesSolve, &
+    !     cellsOnVertex, &
+    !     nEdgesOnCell, &
+    !     areaTriangle, &
+    !     vertexDegree
 
     type(MPAS_pool_type), pointer, intent(in) :: &
          mesh !< Input:
@@ -1122,6 +1143,26 @@ contains
          iCell, &
          iStressVertex, &
          iVelocityVertex
+
+    integer, pointer :: &
+         nVerticesSolve, &
+         vertexDegree
+
+    integer, dimension(:), pointer :: &
+         nEdgesOnCell
+
+    integer, dimension(:,:), pointer :: &
+         cellsOnVertex
+
+    real(kind=RKIND), dimension(:), pointer :: &
+         areaTriangle
+
+    call mpas_pool_get_dimension(mesh, "nVerticesSolve", nVerticesSolve)
+    call mpas_pool_get_dimension(mesh, "vertexDegree", vertexDegree)
+
+    call mpas_pool_get_array(mesh, "nEdgesOnCell", nEdgesOnCell)
+    call mpas_pool_get_array(mesh, "cellsOnVertex", cellsOnVertex)
+    call mpas_pool_get_array(mesh, "areaTriangle", areaTriangle)
 
     ! loop over velocity positions
 #ifdef MPAS_OPENMP_OFFLOAD
@@ -1200,10 +1241,10 @@ contains
     use seaice_velocity_solver_constitutive_relation, only: &
          eccentricitySquared
 
-    use seaice_mesh_pool, only: &
-         nCells, &
-         solveStress, &
-         nEdgesOnCell
+    !use seaice_mesh_pool, only: &
+    !     nCells, &
+    !     solveStress, &
+    !     nEdgesOnCell
 
     type(block_type), intent(inout) :: &
          block
@@ -1211,7 +1252,8 @@ contains
     type(MPAS_pool_type), pointer :: &
          velocityVariationalPool, &
          velocitySolverPool, &
-         ridgingPool
+         ridgingPool, &
+         meshPool
 
     real(kind=RKIND), dimension(:,:), pointer :: &
          strain11, &
@@ -1243,8 +1285,16 @@ contains
          iCell, &
          iVertexOnCell
 
+    integer, pointer :: &
+         nCells
+
+    integer, dimension(:), pointer :: &
+         solveStress, &
+         nEdgesOnCell
+
     call MPAS_pool_get_subpool(block % structs, "velocity_variational", velocityVariationalPool)
     call MPAS_pool_get_subpool(block % structs, "velocity_solver", velocitySolverPool)
+    call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)
 
     call MPAS_pool_get_array(velocityVariationalPool, "strain11", strain11)
     call MPAS_pool_get_array(velocityVariationalPool, "strain22", strain22)
@@ -1252,6 +1302,11 @@ contains
 
     call MPAS_pool_get_array(velocitySolverPool, "divergence", divergence)
     call MPAS_pool_get_array(velocitySolverPool, "shear", shear)
+    call MPAS_pool_get_array(velocitySolverPool, "solveStress", solveStress)
+
+    call MPAS_pool_get_dimension(meshPool, "nCells", nCells)
+
+    call MPAS_pool_get_array(meshPool, "nEdgesOnCell", nEdgesOnCell)
 
     allocate(DeltaAverage(nCells))
 
