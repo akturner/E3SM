@@ -15,6 +15,7 @@ module seaice_time_integration
   use mpas_derived_types
   use mpas_pool_routines
   use mpas_timekeeping
+  use seaice_partition, only: seaice_block_iterator
 
   implicit none
 
@@ -212,7 +213,7 @@ contains
          config_dt
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
        call MPAS_pool_get_subpool(block % structs, "diagnostics", diagnosticsPool)

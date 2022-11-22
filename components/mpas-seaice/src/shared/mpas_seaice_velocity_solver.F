@@ -20,6 +20,7 @@ module seaice_velocity_solver
   use mpas_dmpar
   use mpas_timer
   use mpas_log, only: mpas_log_write, mpas_log_info
+  use seaice_partition, only: seaice_block_iterator
 
   implicit none
 
@@ -143,7 +144,7 @@ contains
 
     ! set timesteps even with velocity turned off
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_config(block % configs, "config_dt", config_dt)
        call MPAS_pool_get_config(block % configs, "config_dynamics_subcycle_number", config_dynamics_subcycle_number)
@@ -207,7 +208,7 @@ contains
        call seaice_init_evp(domain)
 
        block => domain % blocklist
-       do while (associated(block))
+       do while (seaice_block_iterator(block))
 
           call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
           call MPAS_pool_get_subpool(block % structs, "boundary", boundary)
@@ -432,7 +433,7 @@ contains
          iVertex
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_subpool(block % structs, "velocity_solver", velocitySolverPool)
        call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)
@@ -510,7 +511,7 @@ contains
          iCellOnVertex
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_subpool(block % structs, "ocean_coupling", oceanCouplingPool)
        call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)
@@ -720,7 +721,7 @@ contains
          iCell
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_dimension(block % dimensions, "nCells", nCellsSolve)
 
@@ -812,7 +813,7 @@ contains
          (config_use_column_package .and. .not. config_use_column_vertical_thermodynamics)) then
 
        block => domain % blocklist
-       do while (associated(block))
+       do while (seaice_block_iterator(block))
 
           call MPAS_pool_get_subpool(block % structs, "tracers_aggregate", tracersAggregatePool)
           call MPAS_pool_get_subpool(block % structs, "icestate", icestatePool)
@@ -873,7 +874,7 @@ contains
 
     ! interpolate area and mass from cells to vertices
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)
        call MPAS_pool_get_subpool(block % structs, "icestate", icestatePool)
@@ -998,7 +999,7 @@ contains
          cellsOnCell
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_dimension(block % dimensions, "nCells", nCells)
 
@@ -1106,7 +1107,7 @@ contains
          nVertices
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_dimension(block % dimensions, "nVerticesSolve", nVerticesSolve)
        call MPAS_pool_get_dimension(block % dimensions, "nVertices", nVertices)
@@ -1214,7 +1215,7 @@ contains
          config_reuse_halo_exch
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_dimension(block % dimensions, "nVerticesSolve", nVerticesSolve)
 
@@ -1394,7 +1395,7 @@ contains
          ierr
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_config(block % configs, "config_use_column_package", config_use_column_package)
        call MPAS_pool_get_config(block % configs, "config_use_column_vertical_thermodynamics", &
@@ -1571,7 +1572,7 @@ contains
     call MPAS_pool_get_config(domain % blocklist % configs, "config_use_air_stress", config_use_air_stress)
     if (.not. config_use_air_stress) then
        block => domain % blocklist
-       do while (associated(block))
+       do while (seaice_block_iterator(block))
           call MPAS_pool_get_subpool(block % structs, "velocity_solver", velocitySolverPool)
           call MPAS_pool_get_array(velocitySolverPool, "airStressCellU", airStressCellU)
           call MPAS_pool_get_array(velocitySolverPool, "airStressCellV", airStressCellV)
@@ -1628,7 +1629,7 @@ contains
 
     ! interpolate air stress
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)
        call MPAS_pool_get_subpool(block % structs, "velocity_solver", velocitySolverPool)
@@ -1699,7 +1700,7 @@ contains
          airStressCoeff = 0.0012_RKIND
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_dimension(block % dimensions, "nCellsSolve", nCellsSolve)
 
@@ -1767,7 +1768,7 @@ contains
          iVertex
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_dimension(block % dimensions, "nVerticesSolve", nVerticesSolve)
 
@@ -1834,7 +1835,7 @@ contains
          iVertex
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_config(block % configs, "config_use_ocean_stress", configUseOceanStress)
 
@@ -1972,7 +1973,7 @@ contains
          iVertex
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_dimension(block % dimensions, "nVerticesSolve", nVerticesSolve)
 
@@ -2117,7 +2118,7 @@ contains
     call seaice_load_balance_timers(domain, "vel prep after")
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_dimension(block % dimensions, "nVerticesSolve", nVerticesSolve)
 
@@ -2199,7 +2200,7 @@ contains
          surfaceTiltForceV
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_subpool(block % structs, "velocity_solver", velocitySolverPool)
 
@@ -2279,7 +2280,7 @@ contains
     call MPAS_pool_get_config(domain % configs, "config_stress_divergence_scheme", config_stress_divergence_scheme)
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_subpool(block % structs, "velocity_solver", velocitySolverPool)
 
@@ -2682,7 +2683,7 @@ contains
          variationalDenominator
 
     blockPtr => domain % blocklist
-    do while (associated(blockPtr))
+    do while (seaice_block_iterator(blockPtr))
 
        call MPAS_pool_get_subpool(blockPtr % structs, "mesh", meshPool)
        call MPAS_pool_get_subpool(blockPtr % structs, "velocity_weak", velocityWeakPool)
@@ -3023,7 +3024,7 @@ contains
          iVertex
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_config(block % configs, "config_use_ocean_stress", configUseOceanStress)
 
@@ -3145,7 +3146,7 @@ contains
          iVertex
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_dimension(block % dimensions, "nVerticesSolve", nVerticesSolve)
 
@@ -3276,7 +3277,7 @@ contains
          iVertex
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_dimension(block % dimensions, "nVerticesSolve", nVerticesSolve)
 
@@ -3412,7 +3413,7 @@ contains
          config_stress_divergence_scheme
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_config(block % configs, "config_stress_divergence_scheme", config_stress_divergence_scheme)
 
@@ -3490,7 +3491,7 @@ contains
          config_stress_divergence_scheme
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_config(block % configs, "config_stress_divergence_scheme", config_stress_divergence_scheme)
 
@@ -3681,7 +3682,7 @@ contains
 
     ! get ocean stress on vertices
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_dimension(block % dimensions, "nVerticesSolve", nVerticesSolve)
 
@@ -3794,7 +3795,7 @@ contains
        call seaice_load_balance_timers(domain, "vel prep after")
 
        block => domain % blocklist
-       do while (associated(block))
+       do while (seaice_block_iterator(block))
 
           call MPAS_pool_get_dimension(block % dimensions, "nVerticesSolve", nVerticesSolve)
 
@@ -3833,7 +3834,7 @@ contains
     else
 
        block => domain % blocklist
-       do while (associated(block))
+       do while (seaice_block_iterator(block))
 
           call MPAS_pool_get_subpool(block % structs, "velocity_solver", velocitySolverPool)
 

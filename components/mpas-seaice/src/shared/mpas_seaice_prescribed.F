@@ -16,6 +16,7 @@ module seaice_prescribed
   use mpas_pool_routines
   use mpas_forcing
   use seaice_forcing, only: seaiceForcingGroups
+  use seaice_partition, only: seaice_block_iterator
 
   implicit none
 
@@ -217,7 +218,7 @@ contains
        endif ! config_use_prescribed_ice_forcing
 
        blockPtr => domain % blocklist
-       do while (associated(blockPtr))
+       do while (seaice_block_iterator(blockPtr))
 
           call mpas_pool_get_subpool(blockPtr % structs, "prescribed_ice", prescribedIcePool)
           call mpas_pool_get_subpool(blockPtr % structs, "tracers", tracersPool)
@@ -342,7 +343,7 @@ contains
 
        ! set non-computed fluxes, ice velocities, ice-ocn stresses to zero
        blockPtr => domain % blocklist
-       do while (associated(blockPtr))
+       do while (seaice_block_iterator(blockPtr))
 
           call mpas_pool_get_subpool(blockPtr % structs, "velocity_solver", velocitySolverPool)
           call mpas_pool_get_subpool(blockPtr % structs, "ocean_coupling", oceanCouplingPool)

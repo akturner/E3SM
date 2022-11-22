@@ -16,6 +16,7 @@ module seaice_mesh_pool
    use mpas_derived_types
    use mpas_pool_routines
    use mpas_log
+   use seaice_partition, only: seaice_block_iterator
 
    implicit none
    private
@@ -97,7 +98,7 @@ contains
 
     blockCount = 0
     block => domain % blocklist
-    do while ( associated(block) )
+    do while ( seaice_block_iterator(block) )
 
        blockCount = blockCount + 1
        if (blockCount > 1) then

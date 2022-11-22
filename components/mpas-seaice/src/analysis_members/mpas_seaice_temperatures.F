@@ -19,6 +19,7 @@ module seaice_temperatures
    use mpas_dmpar
    use mpas_timekeeping
    use mpas_stream_manager
+   use seaice_partition, only: seaice_block_iterator
 
    implicit none
    private
@@ -285,7 +286,7 @@ contains
       err = 0
 
       block => domain % blocklist
-      do while (associated(block))
+      do while (seaice_block_iterator(block))
 
          call MPAS_pool_get_subpool(block % structs, 'temperaturesAM', temperaturesAMPool)
          call MPAS_pool_get_subpool(block % structs, 'tracers', tracersPool)

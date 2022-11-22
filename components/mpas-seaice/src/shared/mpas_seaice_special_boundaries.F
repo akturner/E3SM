@@ -14,6 +14,7 @@ module seaice_special_boundaries
 
   use mpas_derived_types
   use mpas_pool_routines
+  use seaice_partition, only: seaice_block_iterator
 
   implicit none
 
@@ -114,7 +115,7 @@ contains
     if (useSpecialBoundariesVelocity) then
 
        blockPtr => domain % blocklist
-       do while (associated(blockPtr))
+       do while (seaice_block_iterator(blockPtr))
 
           call MPAS_pool_get_dimension(blockPtr % dimensions, "nVertices", nVertices)
 
@@ -198,7 +199,7 @@ contains
     if (useSpecialBoundariesTracers) then
 
        blockPtr => domain % blocklist
-       do while (associated(blockPtr))
+       do while (seaice_block_iterator(blockPtr))
 
           call MPAS_pool_get_dimension(blockPtr % dimensions, "nCells", nCells)
 
@@ -285,7 +286,7 @@ contains
     if (useSpecialBoundariesVelocity) then
 
        blockPtr => domain % blocklist
-       do while (associated(blockPtr))
+       do while (seaice_block_iterator(blockPtr))
 
           call MPAS_pool_get_dimension(blockPtr % dimensions, "nVertices", nVertices)
 
@@ -372,7 +373,7 @@ contains
     if (useSpecialBoundariesVelocityMasks) then
 
        blockPtr => domain % blocklist
-       do while (associated(blockPtr))
+       do while (seaice_block_iterator(blockPtr))
 
           call MPAS_pool_get_dimension(blockPtr % dimensions, "nCells", nCells)
           call MPAS_pool_get_dimension(blockPtr % dimensions, "nVertices", nVertices)
@@ -444,7 +445,7 @@ contains
     if (useSpecialBoundariesTracers) then
 
        blockPtr => domain % blocklist
-       do while (associated(blockPtr))
+       do while (seaice_block_iterator(blockPtr))
 
           call MPAS_pool_get_dimension(blockPtr % dimensions, "nCells", nCells)
 

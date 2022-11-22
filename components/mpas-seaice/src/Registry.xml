@@ -398,6 +398,10 @@
 			description="Determines if mpi barriers are used and timed before halo exchanges."
 			possible_values=".true. or .false."
 		/>
+		<nml_option name="config_use_even_blocks_only" type="logical" default_value="false" units="unitless"
+			description="Only perform calculations on even blocks."
+			possible_values=".true. or .false."
+		/>
 	</nml_record>
 	<nml_record name="restart" in_defaults="true">
 		<nml_option name="config_do_restart" type="logical" default_value="false" units="unitless"
@@ -2484,7 +2488,10 @@
 
 	<packages>
 
-		<!-- dynamics packages -->
+                <!-- partition package -->
+                <package name="pkgPartitionTest" description=""/>
+
+                <!-- dynamics packages -->
 		<package name="pkgWeak" description=""/>
 		<package name="pkgVariational" description=""/>
 		<package name="pkgWeakVariational" description=""/>
@@ -5402,6 +5409,18 @@
 		<var name="timeAverageTestVariable"
 		     type="real"
 		     dimensions="Time"
+		/>
+	</var_struct>
+
+        <!-- Testing of partition system -->
+	<var_struct name="partition_test" time_levs="1" packages="pkgPartitionTest">
+                <var name="cellActive"
+		     type="integer"
+		     dimensions="nCells Time"
+		/>
+		<var name="cellEvenness"
+		     type="integer"
+		     dimensions="nCells Time"
 		/>
 	</var_struct>
 

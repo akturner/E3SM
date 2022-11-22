@@ -17,6 +17,7 @@ module seaice_miscellaneous
    use mpas_dmpar
    use mpas_timekeeping
    use mpas_stream_manager
+   use seaice_partition, only: seaice_block_iterator
 
    implicit none
    private
@@ -303,7 +304,7 @@ contains
       ! grid cell mean salinity
       if (config_use_column_package) then
          block => domain % blocklist
-         do while(associated(block))
+         do while(seaice_block_iterator(block))
 
             call MPAS_pool_get_subpool(block % structs, "miscellaneousAM", miscellaneousAMPool)
             call MPAS_pool_get_subpool(block % structs, "tracers_aggregate", tracersAggregatePool)
@@ -327,7 +328,7 @@ contains
       ! snow/ice broad band albedo
       if (config_use_column_package .and. config_use_column_shortwave) then
          block => domain % blocklist
-         do while(associated(block))
+         do while(seaice_block_iterator(block))
 
             call MPAS_pool_get_subpool(block % structs, "miscellaneousAM", miscellaneousAMPool)
             call MPAS_pool_get_subpool(block % structs, "shortwave", shortwavePool)
@@ -360,7 +361,7 @@ contains
       ! coriolis stress
       if (config_use_velocity_solver) then
          block => domain % blocklist
-         do while(associated(block))
+         do while(seaice_block_iterator(block))
 
             call MPAS_pool_get_subpool(block % structs, "miscellaneousAM", miscellaneousAMPool)
             call MPAS_pool_get_subpool(block % structs, "velocity_solver", velocitySolverPool)

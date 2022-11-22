@@ -18,6 +18,7 @@ module seaice_conservation_check
    use mpas_timekeeping
    use mpas_stream_manager
    use mpas_log, only: mpas_log_write
+   use seaice_partition, only: seaice_block_iterator
 
    implicit none
    private
@@ -202,7 +203,7 @@ contains
       sumArray = 0.0_RKIND
 
       blockPtr => domain % blocklist
-      do while (associated(blockPtr))
+      do while (seaice_block_iterator(blockPtr))
 
          call MPAS_pool_get_dimension(blockPtr % dimensions, "nCellsSolve", nCellsSolve)
 
@@ -578,7 +579,7 @@ contains
       sumArray = 0.0_RKIND
 
       blockPtr => domain % blocklist
-      do while (associated(blockPtr))
+      do while (seaice_block_iterator(blockPtr))
 
          call MPAS_pool_get_dimension(blockPtr % dimensions, "nCellsSolve", nCellsSolve)
          call MPAS_pool_get_dimension(blockPtr % dimensions, "nHemispheres", nHemispheres)
@@ -816,7 +817,7 @@ contains
       sumArray = 0.0_RKIND
 
       blockPtr => domain % blocklist
-      do while (associated(blockPtr))
+      do while (seaice_block_iterator(blockPtr))
 
          call MPAS_pool_get_dimension(blockPtr % dimensions, "nCellsSolve", nCellsSolve)
 
@@ -1225,7 +1226,7 @@ contains
       sumArray = 0.0_RKIND
 
       blockPtr => domain % blocklist
-      do while (associated(blockPtr))
+      do while (seaice_block_iterator(blockPtr))
 
          call MPAS_pool_get_config(blockPtr % configs, "config_update_ocean_fluxes", config_update_ocean_fluxes)
          call MPAS_pool_get_config(blockPtr % configs, "config_thermodynamics_type", config_thermodynamics_type)
@@ -1522,7 +1523,7 @@ contains
       sumArray = 0.0_RKIND
 
       blockPtr => domain % blocklist
-      do while (associated(blockPtr))
+      do while (seaice_block_iterator(blockPtr))
 
          call MPAS_pool_get_config(blockPtr % configs, "config_update_ocean_fluxes", config_update_ocean_fluxes)
          call MPAS_pool_get_config(blockPtr % configs, "config_thermodynamics_type", config_thermodynamics_type)
@@ -1844,7 +1845,7 @@ contains
       sumArray = 0.0_RKIND
 
       blockPtr => domain % blocklist
-      do while (associated(blockPtr))
+      do while (seaice_block_iterator(blockPtr))
 
          call MPAS_pool_get_dimension(blockPtr % dimensions, "nCellsSolve", nCellsSolve)
 
@@ -2182,7 +2183,7 @@ contains
       energy(:) = 0.0_RKIND
 
       blockPtr => domain % blocklist
-      do while (associated(blockPtr))
+      do while (seaice_block_iterator(blockPtr))
 
          call MPAS_pool_get_subpool(blockPtr % structs, "mesh", meshPool)
          call MPAS_pool_get_subpool(blockPtr % structs, "tracers", tracersPool)
@@ -2323,7 +2324,7 @@ contains
       mass(:) = 0.0_RKIND
 
       blockPtr => domain % blocklist
-      do while (associated(blockPtr))
+      do while (seaice_block_iterator(blockPtr))
 
          call MPAS_pool_get_config(blockPtr % configs, "config_use_topo_meltponds", config_use_topo_meltponds)
 
@@ -2458,7 +2459,7 @@ contains
       salt(:) = 0.0_RKIND
 
       blockPtr => domain % blocklist
-      do while (associated(blockPtr))
+      do while (seaice_block_iterator(blockPtr))
 
          call MPAS_pool_get_subpool(blockPtr % structs, "mesh", meshPool)
          call MPAS_pool_get_subpool(blockPtr % structs, "tracers_aggregate", tracersAggregatePool)
@@ -2555,7 +2556,7 @@ contains
       carbon(:) = 0.0_RKIND
 
       blockPtr => domain % blocklist
-      do while (associated(blockPtr))
+      do while (seaice_block_iterator(blockPtr))
 
          call MPAS_pool_get_subpool(blockPtr % structs, "mesh", meshPool)
          call MPAS_pool_get_subpool(blockPtr % structs, "biogeochemistry", biogeochemistryPool)

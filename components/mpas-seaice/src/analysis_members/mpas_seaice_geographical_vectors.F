@@ -17,6 +17,7 @@ module seaice_geographical_vectors
    use mpas_dmpar
    use mpas_timekeeping
    use mpas_stream_manager
+   use seaice_partition, only: seaice_block_iterator
 
    implicit none
    private
@@ -317,7 +318,7 @@ contains
       call MPAS_pool_get_config(domain % configs, "config_rotate_cartesian_grid", rotateCartesianGrid)
 
       block => domain % blocklist
-      do while (associated(block))
+      do while (seaice_block_iterator(block))
 
          ! get pools
          call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)

@@ -18,6 +18,7 @@ module seaice_load_balance
    use mpas_timekeeping
    use mpas_stream_manager
    use mpas_log, only: mpas_log_write
+   use seaice_partition, only: seaice_block_iterator
 
    implicit none
    private
@@ -179,7 +180,7 @@ contains
       nCellsProcTmp(domain % dminfo % my_proc_id+1) = 0
 
       block => domain % blocklist
-      do while (associated(block))
+      do while (seaice_block_iterator(block))
 
          call MPAS_pool_get_dimension(block % dimensions, "nCellsSolve", nCellsSolve)
 
@@ -330,7 +331,7 @@ contains
       nCellsProcWithSeaIceTmp(domain % dminfo % my_proc_id+1) = 0
 
       block => domain % blocklist
-      do while (associated(block))
+      do while (seaice_block_iterator(block))
 
          call MPAS_pool_get_subpool(block % structs, "tracers_aggregate", tracersAggregatePool)
          call MPAS_pool_get_array(tracersAggregatePool, "iceAreaCell", iceAreaCell)

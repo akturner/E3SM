@@ -14,6 +14,7 @@ module seaice_time_series_stats
   use mpas_timekeeping
   use mpas_stream_manager
   use mpas_log, only: mpas_log_write
+  use seaice_partition, only: seaice_block_iterator
 
   implicit none
   private

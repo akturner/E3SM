@@ -18,6 +18,7 @@ module seaice_high_frequency_output
    use mpas_timekeeping
    use mpas_stream_manager
    use ice_constants_colpkg
+   use seaice_partition, only: seaice_block_iterator
 
    implicit none
    private
@@ -262,7 +263,7 @@ contains
       dminfo = domain % dminfo
 
       block => domain % blocklist
-      do while (associated(block))
+      do while (seaice_block_iterator(block))
          ! get dimensions
 
          ! get pointers to pools

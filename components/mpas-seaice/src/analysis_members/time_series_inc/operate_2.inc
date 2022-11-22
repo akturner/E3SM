@@ -1,7 +1,7 @@
 ! 1 -> 2
 
   block => start_block
-  do while (associated(block))
+  do while (seaice_block_iterator(block))
     call mpas_pool_get_subpool(block % structs, TIME_SERIES_STATS_POOL, amPool)
     call mpas_pool_get_array(block % allFields, &
       variable % input_name, in_array, 1)

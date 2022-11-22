@@ -19,6 +19,7 @@ module seaice_regional_statistics
    use mpas_timekeeping
    use mpas_stream_manager
    use mpas_log, only: mpas_log_write
+   use seaice_partition, only: seaice_block_iterator
 
    implicit none
    private
@@ -244,7 +245,7 @@ contains
      nCellsMasked = 0
 
      block => domain % blocklist
-     do while (associated(block))
+     do while (seaice_block_iterator(block))
 
         call MPAS_pool_get_subpool(block % structs, "regions", regionsPool)
 
@@ -315,7 +316,7 @@ contains
           southernHemisphereLatitudeLimit = -40.0_RKIND
 
      block => domain % blocklist
-     do while (associated(block))
+     do while (seaice_block_iterator(block))
 
         call MPAS_pool_get_subpool(block % structs, "regions", regionsPool)
         call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)
@@ -398,7 +399,7 @@ contains
           iCellOnVertex
 
      block => domain % blocklist
-     do while (associated(block))
+     do while (seaice_block_iterator(block))
 
         call MPAS_pool_get_subpool(block % structs, "regions", regionsPool)
         call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)
@@ -491,7 +492,7 @@ contains
 
     ! loop over blocks
     block => domain % blocklist
-    blockLoop: do while (associated(block))
+    blockLoop: do while (seaice_block_iterator(block))
 
        ! get the region number
        call MPAS_pool_get_dimension(block % dimensions, "nRegions", nRegions)
@@ -1059,7 +1060,7 @@ contains
       globalMaxsIn = -1.0e30_RKIND
 
       block => domain % blocklist
-      do while (associated(block))
+      do while (seaice_block_iterator(block))
 
          call MPAS_pool_get_config(block % configs, "config_AM_regionalStatistics_ice_extent_limit", iceExtentLimit)
 
@@ -1404,7 +1405,7 @@ contains
     outputFieldArrayTmp = 0.0_RKIND
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        ! get the input array
        call MPAS_pool_get_array(block % allFields, trim(inputFieldName), inputFieldArray)
@@ -1524,7 +1525,7 @@ contains
     outputFieldArrayTmp = 0.0_RKIND
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        ! get the input array
        call MPAS_pool_get_array(block % allFields, trim(inputFieldName), inputFieldArray)
@@ -1640,7 +1641,7 @@ contains
     outputFieldArrayTmp = 0.0_RKIND
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        ! get the input array
        call MPAS_pool_get_array(block % allFields, trim(inputFieldName), inputFieldArray)
@@ -1754,7 +1755,7 @@ contains
     outputFieldArrayTmp = 0.0_RKIND
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        ! get the input array
        call MPAS_pool_get_array(block % allFields, trim(inputFieldName), inputFieldArray)
@@ -1880,7 +1881,7 @@ contains
     denominatorTmp = 0.0_RKIND
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        ! get the input array
        call MPAS_pool_get_array(block % allFields, trim(inputFieldName), inputFieldArray)
@@ -2030,7 +2031,7 @@ contains
     denominatorTmp = 0.0_RKIND
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        ! get the input array
        call MPAS_pool_get_array(block % allFields, trim(inputFieldName), inputFieldArray)
@@ -2176,7 +2177,7 @@ contains
     denominatorTmp = 0.0_RKIND
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        ! get the input array
        call MPAS_pool_get_array(block % allFields, trim(inputFieldName), inputFieldArray)
@@ -2319,7 +2320,7 @@ contains
     denominatorTmp = 0.0_RKIND
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        ! get the input array
        call MPAS_pool_get_array(block % allFields, trim(inputFieldName), inputFieldArray)
@@ -2449,7 +2450,7 @@ contains
     outputFieldArrayTmp = 1.0e34_RKIND
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        ! get the input array
        call MPAS_pool_get_array(block % allFields, trim(inputFieldName), inputFieldArray)
@@ -2555,7 +2556,7 @@ contains
     outputFieldArrayTmp = 1.0e34_RKIND
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        ! get the input array
        call MPAS_pool_get_array(block % allFields, trim(inputFieldName), inputFieldArray)
@@ -2662,7 +2663,7 @@ contains
     outputFieldArrayTmp = -1.0e34_RKIND
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        ! get the input array
        call MPAS_pool_get_array(block % allFields, trim(inputFieldName), inputFieldArray)
@@ -2768,7 +2769,7 @@ contains
     outputFieldArrayTmp = -1.0e34_RKIND
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        ! get the input array
        call MPAS_pool_get_array(block % allFields, trim(inputFieldName), inputFieldArray)

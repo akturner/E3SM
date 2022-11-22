@@ -45,6 +45,7 @@ module seaice_TEM_PLATE
    use mpas_dmpar
    use mpas_timekeeping
    use mpas_stream_manager
+   use seaice_partition, only: seaice_block_iterator
 
    implicit none
    private
@@ -296,7 +297,7 @@ contains
       dminfo = domain % dminfo
 
       block => domain % blocklist
-      do while (associated(block))
+      do while (seaice_block_iterator(block))
          call mpas_pool_get_subpool(block % structs, 'state', statePool)
          call mpas_pool_get_subpool(block % structs, 'mesh', meshPool)
          call mpas_pool_get_subpool(block % structs, 'scratch', scratchPool)
@@ -342,7 +343,7 @@ contains
       ! domain partitions, we assign them within a block loop so that all blocks have the
       ! correct values for writing output.
       block => domain % blocklist
-      do while (associated(block))
+      do while (seaice_block_iterator(block))
          call mpas_pool_get_subpool(block % structs, 'temPlateAM', temPlateAMPool)
 
          ! assignment of final temPlateAM variables could occur here.

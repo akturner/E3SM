@@ -17,6 +17,7 @@ module seaice_ridging_diagnostics
    use mpas_dmpar
    use mpas_timekeeping
    use mpas_stream_manager
+   use seaice_partition, only: seaice_block_iterator
 
    implicit none
    private
@@ -281,7 +282,7 @@ contains
       dminfo = domain % dminfo
 
       block => domain % blocklist
-      do while (associated(block))
+      do while (seaice_block_iterator(block))
 
          call MPAS_pool_get_subpool(block % structs, 'ridgingDiagnosticsAM', ridgingDiagnosticsAMPool)
          call MPAS_pool_get_subpool(block % structs, 'tracers', tracersPool)

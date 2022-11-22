@@ -38,6 +38,8 @@ module seaice_core
 
       use seaice_diagnostics, only: &
            seaice_initialize_time_diagnostics
+      use seaice_partition, only: &
+           seaice_init_block_iterator
 
       implicit none
 
@@ -64,6 +66,9 @@ module seaice_core
       call mpas_log_write(' MPI Task $i has access to $i threads', intArgs=(/domain % dminfo % my_proc_id, numThreads/))
       call mpas_log_write(' *****************************************************************************')
       call mpas_log_write(' ')
+
+      ! seaice partitioning init
+      call seaice_init_block_iterator(domain)
 
       ! write out namelist options
       call mpas_log_write(' ') ; call mpas_log_write(" ----- namelist options used -----") ;  call mpas_log_write(' ')

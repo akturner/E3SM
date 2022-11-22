@@ -16,6 +16,7 @@ module seaice_mesh
   use mpas_pool_routines
   use mpas_dmpar
   use mpas_log, only: mpas_log_write
+  use seaice_partition, only: seaice_block_iterator
 
   implicit none
 
@@ -157,7 +158,7 @@ contains
     if (.not. config_do_restart) then
 
        block => domain % blocklist
-       do while(associated(block))
+       do while(seaice_block_iterator(block))
 
           call mpas_pool_get_subpool(block % structs, 'mesh', meshPool)
 
@@ -269,7 +270,7 @@ contains
     else
 
        block => domain % blocklist
-       do while(associated(block))
+       do while(seaice_block_iterator(block))
 
           call mpas_pool_get_subpool(block % structs, 'mesh', meshPool)
 
@@ -335,7 +336,7 @@ contains
     if (config_calculate_coriolis) then
 
        block => domain % blocklist
-       do while (associated(block))
+       do while (seaice_block_iterator(block))
 
           call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)
 
@@ -386,7 +387,7 @@ contains
          blockIDout
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
        call MPAS_pool_get_subpool(block % structs, "boundary", boundary)
@@ -3070,7 +3071,7 @@ contains
     write(*,*)
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)
 
@@ -3411,7 +3412,7 @@ contains
          interiorVertex
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)
        call MPAS_pool_get_subpool(block % structs, "mesh_test", meshTestPool)

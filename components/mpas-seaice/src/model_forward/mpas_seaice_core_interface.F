@@ -579,6 +579,7 @@ module seaice_core_interface
      integer, intent(out) :: ierr
 
      logical, pointer :: &
+          config_use_even_blocks_only, &
           config_use_forcing, &
           config_use_data_icebergs, &
           config_testing_system_test, &
@@ -589,6 +590,7 @@ module seaice_core_interface
           config_use_special_boundaries_tracers
 
      logical, pointer :: &
+          pkgPartitionTestActive, &
           pkgForcingActive, &
           pkgTestingSystemTestActive, &
           pkgSnicarActive, &
@@ -596,6 +598,17 @@ module seaice_core_interface
           pkgSpecialBoundariesActive
 
      ierr = 0
+
+     ! pkgPartitionTest
+     call mpas_pool_get_config(configPool, "config_use_even_blocks_only", config_use_even_blocks_only)
+
+     call MPAS_pool_get_package(packagePool, "pkgPartitionTestActive", pkgPartitionTestActive)
+
+     if (config_use_even_blocks_only) then
+
+        pkgPartitionTestActive = .true.
+
+     endif
 
      ! pkgForcing
 

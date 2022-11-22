@@ -15,6 +15,7 @@ module seaice_velocity_solver_constitutive_relation
   use mpas_derived_types
   use mpas_pool_routines
   use mpas_dmpar
+  use seaice_partition, only: seaice_block_iterator
 
   implicit none
 
@@ -116,7 +117,7 @@ contains
 
     ! general EVP
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_subpool(block % structs, "velocity_solver", velocitySolver)
        call MPAS_pool_get_array(velocitySolver, "dynamicsTimeStep", dynamicsTimeStep)
@@ -133,7 +134,7 @@ contains
     dvEdgeMin = 1.0e30_RKIND
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
 
@@ -153,7 +154,7 @@ contains
 
     ! Bouillon et al. 2013
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        gamma = 0.25_RKIND * 1.0e11_RKIND * dynamicsTimeStep
        numericalInertiaCoefficient = (2.0_RKIND * dampingRatioDenominator * dampingRatio * gamma) / dvEdgeMinGlobal**2

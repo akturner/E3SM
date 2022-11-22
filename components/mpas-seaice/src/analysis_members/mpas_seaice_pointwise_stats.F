@@ -22,6 +22,7 @@ module seaice_pointwise_stats
    use mpas_dmpar
    use mpas_timekeeping
    use mpas_stream_manager
+   use seaice_partition, only: seaice_block_iterator
 
    implicit none
    private
@@ -149,7 +150,7 @@ contains
                      ! Can't compute stats for 0D real...
                   else if ( fieldInfo % nDims == 1 ) then
                      block => domain % blocklist
-                     do while ( associated(block) )
+                     do while ( seaice_block_iterator(block) )
                         call mpas_pool_get_field(block % allFields, fieldName, ptr1DReal)
                         call mpas_pool_get_dimension(block % dimensions, 'nPoints', nPoints)
 
@@ -216,7 +217,7 @@ contains
                      end do
                   else if ( fieldInfo % nDims == 2 ) then
                      block => domain % blocklist
-                     do while ( associated(block) )
+                     do while ( seaice_block_iterator(block) )
                         call mpas_pool_get_field(block % allFields, fieldName, ptr2DReal)
                         call mpas_pool_get_dimension(block % dimensions, 'nPoints', nPoints)
 
@@ -283,7 +284,7 @@ contains
                      end do
                   else if ( fieldInfo % nDims == 3 ) then
                      block => domain % blocklist
-                     do while ( associated(block) )
+                     do while ( seaice_block_iterator(block) )
                         call mpas_pool_get_field(block % allFields, fieldName, ptr3DReal)
                         call mpas_pool_get_dimension(block % dimensions, 'nPoints', nPoints)
 
@@ -350,7 +351,7 @@ contains
                      end do
                   else if ( fieldInfo % nDims == 4 ) then
                      block => domain % blocklist
-                     do while ( associated(block) )
+                     do while ( seaice_block_iterator(block) )
                         call mpas_pool_get_field(block % allFields, fieldName, ptr4DReal)
                         call mpas_pool_get_dimension(block % dimensions, 'nPoints', nPoints)
 
@@ -417,7 +418,7 @@ contains
                      end do
                   else if ( fieldInfo % nDims == 5 ) then
                      block => domain % blocklist
-                     do while ( associated(block) )
+                     do while ( seaice_block_iterator(block) )
                         call mpas_pool_get_field(block % allFields, fieldName, ptr5DReal)
                         call mpas_pool_get_dimension(block % dimensions, 'nPoints', nPoints)
 
@@ -489,7 +490,7 @@ contains
                      ! Can't compute stats for 0D integer...
                   else if ( fieldInfo % nDims == 1 ) then
                      block => domain % blocklist
-                     do while ( associated(block) )
+                     do while ( seaice_block_iterator(block) )
                         call mpas_pool_get_field(block % allFields, fieldName, ptr1DInt)
                         call mpas_pool_get_dimension(block % dimensions, 'nPoints', nPoints)
 
@@ -555,7 +556,7 @@ contains
                      end do
                   else if ( fieldInfo % nDims == 2 ) then
                      block => domain % blocklist
-                     do while ( associated(block) )
+                     do while ( seaice_block_iterator(block) )
                         call mpas_pool_get_field(block % allFields, fieldName, ptr2DInt)
                         call mpas_pool_get_dimension(block % dimensions, 'nPoints', nPoints)
 
@@ -621,7 +622,7 @@ contains
                      end do
                   else if ( fieldInfo % nDims == 3 ) then
                      block => domain % blocklist
-                     do while ( associated(block) )
+                     do while ( seaice_block_iterator(block) )
                         call mpas_pool_get_field(block % allFields, fieldName, ptr3DInt)
                         call mpas_pool_get_dimension(block % dimensions, 'nPoints', nPoints)
 
@@ -772,7 +773,7 @@ contains
       call mpas_pool_get_dimension(domain % blocklist % dimensions, 'nPoints', nPoints)
 
       block => domain % blocklist
-      do while (associated(block))
+      do while (seaice_block_iterator(block))
          call mpas_pool_get_subpool(block % structs, 'mesh', meshPool)
 
          call mpas_pool_get_subpool(block % structs, 'pointLocations', pointPool)
@@ -1034,7 +1035,7 @@ contains
             ! Accumulate point data into the first block's field
             PWAM_DEBUG_WRITE(' -- Accumulating field pointer ' // trim(poolItr % memberName))
             block => domain % blocklist
-            do while ( associated(block) )
+            do while ( seaice_block_iterator(block) )
                call mpas_pool_get_subpool(block % structs, 'pointLocations', pointPool)
 
                if ( fieldInfo % fieldType == MPAS_POOL_REAL ) then

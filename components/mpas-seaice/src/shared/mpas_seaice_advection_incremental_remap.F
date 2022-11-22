@@ -18,6 +18,7 @@ module seaice_advection_incremental_remap
    use mpas_dmpar
    use mpas_timer
    use mpas_log, only: mpas_log_write
+   use seaice_partition, only: seaice_block_iterator
 
    use seaice_advection_incremental_remap_tracers, only: &
         tracer_type, &
@@ -287,7 +288,7 @@ contains
 
     ! loop over the blocks in the domain
 
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        if (verboseInit) call mpas_log_write('Get arrays from pools')
 
@@ -763,7 +764,7 @@ contains
 
        block => block % next
 
-    enddo  ! associated(block)
+    enddo  ! seaice_block_iterator(block)
 
     ! Do a halo update for the reconstruction coefficients.
     ! Otherwise the coefficients are zero in halo cells.
@@ -2501,7 +2502,7 @@ contains
 
     block => domain % blocklist
 
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        if (verboseRun) call mpas_log_write('Convert volume to thickness')
 
@@ -2541,14 +2542,14 @@ contains
 
        block => block % next
 
-    enddo  ! associated(block)
+    enddo  ! seaice_block_iterator(block)
 
     ! Call the main IR algorithm for each block
 
     block => domain % blocklist
 
     call mpas_timer_start("incr remap blocks")
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        if (verboseRun) call mpas_log_write('Call incremental_remap_block: block = $i', intArgs=(/block % localBlockID/))
 
@@ -2565,7 +2566,7 @@ contains
 
        block  => block % next
 
-    enddo  ! associated(block)
+    enddo  ! seaice_block_iterator(block)
     call mpas_timer_stop("incr remap blocks")
 
     ! Optional check for conservation of mass and mass*tracer
@@ -2607,7 +2608,7 @@ contains
 
     block => domain % blocklist
 
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        if (verboseRun) call mpas_log_write('Convert thickness to volume')
 
@@ -2647,7 +2648,7 @@ contains
 
        block  => block % next
 
-    enddo  ! associated(block)
+    enddo  ! seaice_block_iterator(block)
 
     ! final halo updates
 
@@ -8501,7 +8502,7 @@ contains
 
                 block => domain % blocklist
 
-                do while(associated(block))
+                do while(seaice_block_iterator(block))
 
                    do iCell = 1, nCellsSolve
                       do iCat = 1, nCategories
@@ -8536,7 +8537,7 @@ contains
 
                    block  => block % next
 
-                end do  ! associated(block)
+                end do  ! seaice_block_iterator(block)
 
              endif    ! extendedMinMax
 
@@ -8544,7 +8545,7 @@ contains
 
              block => domain % blocklist
 
-             do while(associated(block))
+             do while(seaice_block_iterator(block))
 
                 ! check for monotonicity;
                 ! compare the new value in each cell with the max/min of the old values in the cell neighborhood
@@ -8602,7 +8603,7 @@ contains
 
                 block => block % next
 
-             enddo   ! associated(block)
+             enddo   ! seaice_block_iterator(block)
 
           elseif (thisTracer % ndims == 3) then
 
@@ -8624,7 +8625,7 @@ contains
 
                 block => domain % blocklist
 
-                do while(associated(block))
+                do while(seaice_block_iterator(block))
 
                    do iCell = 1, nCellsSolve
                       do iCat = 1, nCategories
@@ -8666,7 +8667,7 @@ contains
 
                    block => block % next
 
-                enddo    ! associated(block)
+                enddo    ! seaice_block_iterator(block)
 
              endif    ! extendedMinMax
 
@@ -8674,7 +8675,7 @@ contains
 
              block => domain % blocklist
 
-             do while(associated(block))
+             do while(seaice_block_iterator(block))
 
                 ! check for monotonicity;
                 ! compare the new value in each cell with the max/min of the old values in the cell neighborhood
@@ -8737,7 +8738,7 @@ contains
 
                 block => block % next
 
-             enddo     ! associated(block)
+             enddo     ! seaice_block_iterator(block)
 
           endif        ! ndims
        endif           ! nparents

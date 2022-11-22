@@ -16,6 +16,7 @@ module seaice_advection_upwind
   use mpas_pool_routines
   use mpas_timekeeping
   use mpas_dmpar
+  use seaice_partition, only: seaice_block_iterator
 
   implicit none
 
@@ -103,7 +104,7 @@ contains
          err
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
        call MPAS_pool_get_subpool(block % structs, "velocity_solver", velocity_solver)
@@ -425,7 +426,7 @@ contains
          dynamicsTimeStep
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
        call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
@@ -459,7 +460,7 @@ contains
     call halo_exchange_advection(domain)
 
     block => domain % blocklist
-    do while (associated(block))
+    do while (seaice_block_iterator(block))
 
        call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
        call MPAS_pool_get_subpool(block % structs, "boundary", boundary)
