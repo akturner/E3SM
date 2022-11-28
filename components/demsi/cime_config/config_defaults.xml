@@ -1,0 +1,595 @@
+<Configs>
+
+  <!-- Simulations timing -->
+  <ConfigGroup name="simulationTiming">
+    <Config name="calendarType" value="noleap"/>
+    <Config name="startTime" value="2000-01-01_00:00:00"/>
+    <Config name="timeStep" value="SECONDS:3600"/>
+    <Config name="simulationStopType" value="simulationDuration"/>
+    <Config name="simulationDuration" value="YEARS:10"/>
+    <Config name="nDynamicsSubcycles" value="12"/>
+    <Config name="doRestart" value="false"/>
+  </ConfigGroup>
+
+  <!-- use sections -->
+  <ConfigGroup name="useSections">
+    <Config name="useForcing" value="true"/>
+    <Config name="useDynamics" value="true"/>
+    <Config name="useExternalForces" value="true"/>
+    <Config name="useColumn" value="true"/>
+  </ConfigGroup>
+
+  <!-- Domain -->
+  <ConfigGroup name="domain">
+    <Config name="domainFile" value="./grid.arctic.nc"/>
+    <Config name="projectionType" value="arctic_basin"/>
+  </ConfigGroup>
+
+  <!-- Grid -->
+  <ConfigGroup name="grid">
+    <Config name="gridFile" value="./grid.arctic.nc"/>
+  </ConfigGroup>
+
+  <!-- lammps set up scripts -->
+  <ConfigGroup name="lammps">
+    <Config name="integrateMotion" value="true"/>
+    <Config name="useCoastlineElements" value="true"/>
+    <Config name="skinFraction" value="0.3"/>
+    <Config name="timestepThickness" value="1.0"/>
+    <Config name="lostAtomsType" value="warn"/>
+    <Config name="iceConcentrationRemovalLimit" value="1e-11"/>
+    <Config name="printScreen" value="false"/>
+  </ConfigGroup>
+
+  <!-- Contacts -->
+  <ConfigGroup name="contacts">
+    <Config name="contactType" value="hopkins"/>
+    <Config name="timeStepFactor" value="0.02"/>
+    <Config name="bondThickness" value="0.2"/>
+    <Config name="elasticModulus" value="2.0e9"/>
+    <Config name="poissonRatio" value="0.3"/>
+    <Config name="compressiveBreakingStressType" value="constant"/>
+    <Config name="compressiveBreakingStress" value="0.0"/>
+    <Config name="tensileBreakingStressType" value="constant"/>
+    <Config name="tensileBreakingStress" value="0.0"/>
+    <Config name="frictionAngle" value="13.0"/>
+    <Config name="bondedDamping" value="1.0e4"/>
+    <Config name="tangentialFriction" value="0.3"/>
+    <Config name="nonbondedNormalDamping" value="0.1"/>
+    <Config name="nonbondedTangentialDamping" value="1.0e5"/>
+    <Config name="criticalCrushingThickness" value="0.2"/>
+    <Config name="plasticFrictionCoeff" value="26126.0"/>
+    <Config name="plasticHardeningCoeff" value="9.28"/>
+    <Config name="exponentialIceStrengthCoeff" value="0.0"/>
+  </ConfigGroup>
+
+  <!-- dynamics -->
+  <ConfigGroup name="dynamics">
+    <Config name="minimumIceThickness" value="0.01"/>
+    <Config name="minimumIceConcentration" value="0.0"/>
+  </ConfigGroup>
+
+  <!-- Particle input -->
+  <ConfigGroup name="particleInput">
+    <Config name="particleInputFile" value="./particles_in_init_no_ice.arctic.nc"/>
+  </ConfigGroup>
+
+  <!-- Particle output -->
+  <ConfigGroup name="particleOutput">
+    <Array name="particleOutputStreams">
+      <ParticleOutputStream name="particleOutput">
+        <Config name="active" value="true"/>
+        <Config name="filenameTemplate" value="particles_arctic_basin.$Y-$M-$D_$h:$m:$s.nc"/>
+        <Config name="outputDirectory" value="./output/"/>
+        <Config name="writeInterval" value="DAYS:1"/>
+        <Config name="clobber" value="true"/>
+        <Config name="writeBonds" value="true"/>
+        <Array name="OutputFields">
+          <OutputField>effectiveElementArea</OutputField>
+          <OutputField>iceAreaCell</OutputField>
+          <OutputField>iceVolumeCell</OutputField>
+          <OutputField>snowVolumeCell</OutputField>
+          <OutputField>surfaceTemperatureCell</OutputField>
+          <OutputField>iceEnthalpyCell</OutputField>
+          <OutputField>iceSalinityCell</OutputField>
+          <OutputField>snowEnthalpyCell</OutputField>
+          <OutputField>iceAgeCell</OutputField>
+          <OutputField>firstYearIceAreaCell</OutputField>
+          <OutputField>levelIceAreaCell</OutputField>
+          <OutputField>levelIceVolumeCell</OutputField>
+          <OutputField>pondAreaCell</OutputField>
+          <OutputField>pondDepthCell</OutputField>
+          <OutputField>pondLidThicknessCell</OutputField>
+          <OutputField>snowScatteringAerosolCell</OutputField>
+          <OutputField>snowBodyAerosolCell</OutputField>
+          <OutputField>iceScatteringAerosolCell</OutputField>
+          <OutputField>iceBodyAerosolCell</OutputField>
+          <OutputField>xIceVelocity</OutputField>
+          <OutputField>yIceVelocity</OutputField>
+          <OutputField>xSnowVelocity</OutputField>
+          <OutputField>ySnowVelocity</OutputField>
+          <OutputField>openWaterArea</OutputField>
+          <OutputField>airLevelHeight</OutputField>
+          <OutputField>airPotentialTemperature</OutputField>
+          <OutputField>airTemperature</OutputField>
+          <OutputField>airSpecificHumidity</OutputField>
+          <OutputField>airDensity</OutputField>
+          <OutputField>shortwaveVisibleDirectDown</OutputField>
+          <OutputField>shortwaveVisibleDiffuseDown</OutputField>
+          <OutputField>shortwaveIRDirectDown</OutputField>
+          <OutputField>shortwaveIRDiffuseDown</OutputField>
+          <OutputField>longwaveDown</OutputField>
+          <OutputField>rainfallRate</OutputField>
+          <OutputField>snowfallRate</OutputField>
+          <OutputField>uAirVelocity</OutputField>
+          <OutputField>vAirVelocity</OutputField>
+          <OutputField>atmosReferenceSpeed10m</OutputField>
+          <OutputField>atmosReferenceTemperature2m</OutputField>
+          <OutputField>atmosReferenceHumidity2m</OutputField>
+          <OutputField>windSpeed</OutputField>
+          <OutputField>uAirStress</OutputField>
+          <OutputField>vAirStress</OutputField>
+          <OutputField>shortwaveDown</OutputField>
+          <OutputField>cloudFraction</OutputField>
+          <OutputField>sensibleTransferCoefficient</OutputField>
+          <OutputField>latentTransferCoefficient</OutputField>
+          <OutputField>precipitationRate</OutputField>
+          <OutputField>latentHeatFluxCouple</OutputField>
+          <OutputField>sensibleHeatFluxCouple</OutputField>
+          <OutputField>surfaceHeatFluxCouple</OutputField>
+          <OutputField>surfaceConductiveFluxCouple</OutputField>
+          <OutputField>airStressForcingU</OutputField>
+          <OutputField>airStressForcingV</OutputField>
+          <OutputField>seaSurfaceTemperature</OutputField>
+          <OutputField>seaSurfaceSalinity</OutputField>
+          <OutputField>seaFreezingTemperature</OutputField>
+          <OutputField>freezingMeltingPotential</OutputField>
+          <OutputField>uOceanVelocity</OutputField>
+          <OutputField>vOceanVelocity</OutputField>
+          <OutputField>seaSurfaceTiltU</OutputField>
+          <OutputField>seaSurfaceTiltV</OutputField>
+          <OutputField>oceanMixedLayerDepth</OutputField>
+          <OutputField>oceanHeatFluxConvergence</OutputField>
+          <OutputField>lateralIceMeltFraction</OutputField>
+          <OutputField>surfaceIceMelt</OutputField>
+          <OutputField>basalIceMelt</OutputField>
+          <OutputField>lateralIceMelt</OutputField>
+          <OutputField>snowMelt</OutputField>
+          <OutputField>congelation</OutputField>
+          <OutputField>snowiceFormation</OutputField>
+          <OutputField>snowThicknessChange</OutputField>
+          <OutputField>frazilFormation</OutputField>
+          <OutputField>frazilGrowthDiagnostic</OutputField>
+          <OutputField>surfaceHeatFlux</OutputField>
+          <OutputField>surfaceConductiveFlux</OutputField>
+          <OutputField>longwaveUp</OutputField>
+          <OutputField>sensibleHeatFlux</OutputField>
+          <OutputField>latentHeatFlux</OutputField>
+          <OutputField>evaporativeWaterFlux</OutputField>
+          <OutputField>oceanFreshWaterFlux</OutputField>
+          <OutputField>oceanSaltFlux</OutputField>
+          <OutputField>oceanHeatFlux</OutputField>
+          <OutputField>oceanShortwaveFlux</OutputField>
+          <OutputField>oceanFreshWaterFluxArea</OutputField>
+          <OutputField>oceanSaltFluxArea</OutputField>
+          <OutputField>oceanHeatFluxArea</OutputField>
+          <OutputField>oceanShortwaveFluxArea</OutputField>
+          <OutputField>oceanHeatFluxIceBottom</OutputField>
+          <OutputField>airStressOceanU</OutputField>
+          <OutputField>airStressOceanV</OutputField>
+          <OutputField>atmosReferenceTemperature2mOcean</OutputField>
+          <OutputField>atmosReferenceHumidity2mOcean</OutputField>
+          <OutputField>albedoVisibleDirectOcean</OutputField>
+          <OutputField>albedoVisibleDiffuseOcean</OutputField>
+          <OutputField>albedoIRDirectOcean</OutputField>
+          <OutputField>albedoIRDiffuseOcean</OutputField>
+          <OutputField>longwaveUpOcean</OutputField>
+          <OutputField>sensibleHeatFluxOcean</OutputField>
+          <OutputField>latentHeatFluxOcean</OutputField>
+          <OutputField>evaporativeWaterFluxOcean</OutputField>
+          <OutputField>shortwaveScalingFactor</OutputField>
+          <OutputField>surfaceShortwaveFlux</OutputField>
+          <OutputField>interiorShortwaveFlux</OutputField>
+          <OutputField>penetratingShortwaveFlux</OutputField>
+          <OutputField>shortwaveLayerPenetration</OutputField>
+          <OutputField>absorbedShortwaveFlux</OutputField>
+          <OutputField>absorbedShortwaveSnowLayer</OutputField>
+          <OutputField>absorbedShortwaveIceLayer</OutputField>
+          <OutputField>airStressCellU</OutputField>
+          <OutputField>airStressCellV</OutputField>
+          <OutputField>oceanStressCellU</OutputField>
+          <OutputField>oceanStressCellV</OutputField>
+        </Array>
+      </ParticleOutputStream>
+    </Array>
+  </ConfigGroup>
+
+  <!-- Particle averaged output -->
+  <ConfigGroup name="particleAvgOutput">
+    <Array name="particleAvgOutputStreams">
+      <ParticleAvgOutputStream name="particleAvgSSMI">
+        <Config name="active" value="false"/>
+        <Config name="meshFilename" value="../../DATA/ssmi/mesh/mesh_ssmi.nc"/>
+        <Config name="filenameTemplate" value="particles_avg_ssmi.$Y-$M-$D_$h:$m:$s.nc"/>
+        <Config name="outputDirectory" value="./output/"/>
+        <Config name="accumulationInterval" value="HOURS:1"/>
+        <Config name="writeInterval" value="DAYS:1"/>
+        <Config name="clobber" value="true"/>
+        <Array name="OutputFields">
+          <OutputField>effectiveElementArea</OutputField>
+          <OutputField>iceAreaCell</OutputField>
+          <OutputField>iceVolumeCell</OutputField>
+          <OutputField>snowVolumeCell</OutputField>
+        </Array>
+      </ParticleAvgOutputStream>
+      <ParticleAvgOutputStream name="particleAvgPathfinder">
+        <Config name="active" value="false"/>
+        <Config name="meshFilename" value="../../DATA/pathfinder/mesh/mesh_pathfinder.nc"/>
+        <Config name="filenameTemplate" value="particles_avg_pathfinder.$Y-$M-$D_$h:$m:$s.nc"/>
+        <Config name="outputDirectory" value="./output/"/>
+        <Config name="accumulationInterval" value="HOURS:1"/>
+        <Config name="writeInterval" value="DAYS:1"/>
+        <Config name="clobber" value="true"/>
+        <Array name="OutputFields">
+          <OutputField>effectiveElementArea</OutputField>
+          <OutputField>iceAreaCell</OutputField>
+          <OutputField>iceVelocity</OutputField>
+          <OutputField>iceSpeed</OutputField>
+        </Array>
+      </ParticleAvgOutputStream>
+    </Array>
+  </ConfigGroup>
+
+  <!-- Gridded output -->
+  <ConfigGroup name="griddedOutput">
+    <Array name="griddedOutputStreams">
+      <GriddedOutputStream name="griddedOutput">
+        <Config name="active" value="false"/>
+        <Config name="filenameTemplate" value="gridded_out.$Y-$M-$D_$h:$m:$s.nc"/>
+        <Config name="outputDirectory" value="./output/"/>
+        <Config name="writeInterval" value="HOURS:3"/>
+        <Config name="clobber" value="true"/>
+        <Array name="OutputFields">
+          <OutputField>latitude</OutputField>
+          <OutputField>longitude</OutputField>
+          <OutputField>uAirVelocity</OutputField>
+          <OutputField>vAirVelocity</OutputField>
+          <OutputField>longwaveFluxDown</OutputField>
+          <OutputField>shortwaveFluxDown</OutputField>
+          <OutputField>airTemperature</OutputField>
+          <OutputField>airSpecificHumidity</OutputField>
+          <OutputField>precipitationRate</OutputField>
+          <OutputField>cloudFraction</OutputField>
+          <OutputField>uOceanVelocity</OutputField>
+          <OutputField>vOceanVelocity</OutputField>
+          <OutputField>seaSurfaceTemperature</OutputField>
+          <OutputField>seaSurfaceSalinity</OutputField>
+          <OutputField>seaSurfaceTiltU</OutputField>
+          <OutputField>seaSurfaceTiltV</OutputField>
+          <OutputField>oceanMixedLayerDepth</OutputField>
+          <OutputField>oceanHeatFluxConvergence</OutputField>
+        </Array>
+      </GriddedOutputStream>
+    </Array>
+  </ConfigGroup>
+
+  <!-- Tessellation output -->
+  <ConfigGroup name="tessellationOutput">
+    <Array name="tessellationOutputStreams">
+      <TessellationOutputStream name="oceanOutput">
+        <Config name="active" value="false"/>
+        <Config name="filenameTemplate" value="ocean_out.$Y-$M-$D_$h:$m:$s.nc"/>
+        <Config name="outputDirectory" value="./output/"/>
+        <Config name="writeInterval" value="HOURS:3"/>
+        <Config name="clobber" value="true"/>
+        <Array name="OutputFields">
+          <OutputField>latitude</OutputField>
+          <OutputField>longitude</OutputField>
+          <OutputField>seaSurfaceTemperature</OutputField>
+          <OutputField>seaSurfaceSalinity</OutputField>
+          <OutputField>seaFreezingTemperature</OutputField>
+          <OutputField>iceConcentration</OutputField>
+          <OutputField>iceSurfaceTemperature</OutputField>
+          <OutputField>oceanHeatFlux</OutputField>
+          <OutputField>oceanShortwaveFlux</OutputField>
+          <OutputField>freezingMeltingPotential</OutputField>
+        </Array>
+      </TessellationOutputStream>
+    </Array>
+  </ConfigGroup>
+
+  <!-- TessellationPoints output -->
+  <ConfigGroup name="tessellationPointsOutput">
+    <Array name="tessellationPointsOutputStreams">
+      <TessellationPointsOutputStream name="oceanPointsOutput">
+        <Config name="active" value="false"/>
+        <Config name="filename" value="ocean_points_out.nc"/>
+        <Config name="outputDirectory" value="./output/"/>
+        <Config name="clobber" value="true"/>
+        <Array name="PointGlobalIndices">
+          <PointGlobalIndex>10775</PointGlobalIndex>
+          <PointGlobalIndex>25012</PointGlobalIndex>
+          <PointGlobalIndex>25073</PointGlobalIndex>
+          <PointGlobalIndex>25134</PointGlobalIndex>
+          <PointGlobalIndex>25209</PointGlobalIndex>
+        </Array>
+        <Array name="OutputFields">
+          <OutputField>seaSurfaceTemperature</OutputField>
+          <OutputField>seaSurfaceSalinity</OutputField>
+          <OutputField>seaFreezingTemperature</OutputField>
+          <OutputField>iceConcentration</OutputField>
+          <OutputField>iceSurfaceTemperature</OutputField>
+          <OutputField>oceanHeatFlux</OutputField>
+          <OutputField>oceanShortwaveFlux</OutputField>
+          <OutputField>freezingMeltingPotential</OutputField>
+          <OutputField>latitude</OutputField>
+          <OutputField>longitude</OutputField>
+          <OutputField>airTemperature</OutputField>
+          <OutputField>airSpecificHumidity</OutputField>
+          <OutputField>shortwaveDown</OutputField>
+          <OutputField>longwaveDown</OutputField>
+          <OutputField>uAirVelocity</OutputField>
+          <OutputField>vAirVelocity</OutputField>
+          <OutputField>snowfallRate</OutputField>
+          <OutputField>rainfallRate</OutputField>
+          <OutputField>precipitationRate</OutputField>
+          <OutputField>cloudFraction</OutputField>
+          <OutputField>shortwaveVisibleDirectDown</OutputField>
+          <OutputField>shortwaveVisibleDiffuseDown</OutputField>
+          <OutputField>shortwaveIRDirectDown</OutputField>
+          <OutputField>shortwaveIRDiffuseDown</OutputField>
+          <OutputField>airDensity</OutputField>
+          <OutputField>windSpeed</OutputField>
+          <OutputField>airPotentialTemperature</OutputField>
+          <OutputField>sensibleTransferCoefficient</OutputField>
+          <OutputField>latentTransferCoefficient</OutputField>
+          <OutputField>uAirStress</OutputField>
+          <OutputField>vAirStress</OutputField>
+          <OutputField>airLevelHeight</OutputField>
+          <OutputField>atmosReferenceTemperature2mOcean</OutputField>
+          <OutputField>atmosReferenceHumidity2mOcean</OutputField>
+          <OutputField>airDragCoefficient</OutputField>
+          <OutputField>airOceanDragCoefficientRatio</OutputField>
+          <OutputField>albedoVisibleDirectOcean</OutputField>
+          <OutputField>albedoIRDirectOcean</OutputField>
+          <OutputField>albedoVisibleDiffuseOcean</OutputField>
+          <OutputField>albedoIRDiffuseOcean</OutputField>
+          <OutputField>longwaveUpOcean</OutputField>
+          <OutputField>sensibleHeatFluxOcean</OutputField>
+          <OutputField>latentHeatFluxOcean</OutputField>
+          <OutputField>evaporativeWaterFluxOcean</OutputField>
+          <OutputField>uOceanVelocity</OutputField>
+          <OutputField>vOceanVelocity</OutputField>
+          <OutputField>seaSurfaceTiltU</OutputField>
+          <OutputField>seaSurfaceTiltV</OutputField>
+          <OutputField>oceanMixedLayerDepth</OutputField>
+          <OutputField>oceanHeatFluxConvergence</OutputField>
+          <OutputField>airStressOceanU</OutputField>
+          <OutputField>airStressOceanV</OutputField>
+        </Array>
+      </TessellationPointsOutputStream>
+    </Array>
+  </ConfigGroup>
+
+  <!-- Regional statistics -->
+  <ConfigGroup name="regionalStatistics">
+    <Config name="active" value="true"/>
+    <Config name="outputFilename" value="regional_statistics.nc"/>
+    <Config name="outputDirectory" value="./output/"/>
+    <Config name="outputInterval" value="DAYS:1"/>
+    <Config name="clobber" value="true"/>
+  </ConfigGroup>
+
+  <!-- Logging -->
+  <ConfigGroup name="logging">
+    <Config name="writeLogAllProcs" value="false"/>
+    <Config name="writeLogDebug" value="false"/>
+  </ConfigGroup>
+
+  <!-- Forcing -->
+  <ConfigGroup name="forcing">
+    <Array name="ForcingGroups">
+      <ForcingGroup name="six_hourly_atmos">
+        <Config name="forcingFilenameTemplate" value="forcing_CORE_six_hourly.arctic.$Y.nc"/>
+        <Config name="timeVaryingForcing" value="true"/>
+        <Config name="forcingReferenceTime" value="2000-01-01_03:00:00"/>
+        <Config name="forcingInterval" value="HOURS:6"/>
+        <Array name="ForcingFields">
+          <ForcingField>airTemperature</ForcingField>
+          <ForcingField>airSpecificHumidity</ForcingField>
+          <ForcingField>uAirVelocity</ForcingField>
+          <ForcingField>vAirVelocity</ForcingField>
+        </Array>
+      </ForcingGroup>
+      <ForcingGroup name="monthly_clim_atmos">
+        <Config name="forcingFilenameTemplate" value="forcing_CORE_monthly_clim_atmos.arctic.0000.nc"/>
+        <Config name="timeVaryingForcing" value="true"/>
+        <Config name="forcingReferenceTime" value="0000-01-15_00:00:00"/>
+        <Config name="forcingInterval" value="MONTHS:1"/>
+        <Array name="ForcingFields">
+          <ForcingField>cloudFraction</ForcingField>
+          <ForcingField>precipitationRate</ForcingField>
+        </Array>
+      </ForcingGroup>
+      <ForcingGroup name="monthly_clim_ocean">
+        <Config name="forcingFilenameTemplate" value="forcing_CORE_monthly_clim_ocean.arctic.0000.nc"/>
+        <Config name="timeVaryingForcing" value="true"/>
+        <Config name="forcingReferenceTime" value="0000-01-15_00:00:00"/>
+        <Config name="forcingInterval" value="MONTHS:1"/>
+        <Array name="ForcingFields">
+          <ForcingField>seaSurfaceSalinity</ForcingField>
+          <ForcingField>uOceanVelocity</ForcingField>
+          <ForcingField>vOceanVelocity</ForcingField>
+          <ForcingField>seaSurfaceTiltU</ForcingField>
+          <ForcingField>seaSurfaceTiltV</ForcingField>
+          <ForcingField>oceanMixedLayerDepth</ForcingField>
+          <ForcingField>oceanHeatFluxConvergence</ForcingField>
+        </Array>
+      </ForcingGroup>
+      <ForcingGroup name="sst_init">
+        <Config name="forcingFilenameTemplate" value="forcing_CORE_monthly_clim_ocean.arctic.0000.nc"/>
+        <Config name="timeVaryingForcing" value="true"/>
+        <Config name="forcingReferenceTime" value="0000-01-15_00:00:00"/>
+        <Config name="forcingInterval" value="MONTHS:1"/>
+        <Array name="ForcingFields">
+          <ForcingField>seaSurfaceTemperature</ForcingField>
+        </Array>
+      </ForcingGroup>
+    </Array>
+    <Config name="useLimitTemperature" value="true"/>
+    <Config name="useLimitHumidity" value="true"/>
+    <Config name="useGetShortwaveFromCloudiness" value="true"/>
+    <Config name="useSplitShortwave" value="true"/>
+    <Config name="useApplyPhysicalLimits" value="true"/>
+    <Config name= "longwaveType" value="rosati_miyakoda"/>
+    <Config name= "useSplitPrecipitation" value="true"/>
+    <Config name= "precipitationUnits" value="mm_per_sec"/>
+  </ConfigGroup>
+
+  <!-- Initialization -->
+  <ConfigGroup name="initialization">
+    <Config name="massInitType" value="cice"/>
+  </ConfigGroup>
+
+  <!-- Testing -->
+  <ConfigGroup name="testing">
+    <Config name="testColumnProcTransfer" value="false"/>
+  </ConfigGroup>
+
+  <!-- External forces-->
+  <ConfigGroup name="externalForces">
+    <Config name="useAirStress" value="true"/>
+    <Config name="useOceanStress" value="true"/>
+    <Config name="useCoriolisForce" value="false"/>
+    <Config name="useSurfaceTiltForce" value="false"/>
+
+    <Config name="atmDensity" value="1.225"/>
+    <Config name="ocnDensity" value="1017.0"/>
+    <Config name="windDragCoefficient" value="0.0012"/>
+    <Config name="oceanDragCoefficient" value="0.0055"/>
+    <Config name="earthRotationRate" value="7.29212e-5"/>
+  </ConfigGroup>
+
+  <!-- Remapping -->
+  <ConfigGroup name="remapping">
+    <Config name="useRemapping" value="true"/>
+    <Config name="useHighOrder" value="true"/>
+    <Config name="remappingCorrectionType" value="flux"/>
+    <Config name="remappingInterval" value="DAYS:1"/>
+    <Config name="ameliorateCoastalOverlap" value="true"/>
+    <Config name="remapMomentum" value="false"/>
+    <Config name="removeSmallExcessAreas" value="true"/>
+    <Config name="checkConservation" value="false"/>
+    <Config name="checkMonotonicity" value="false"/>
+    <Config name="checkRemappingWeights" value="false"/>
+    <Config name="checkEffectiveArea" value="false"/>
+    <Config name="checkIceConcentrationBounds" value="false"/>
+    <Config name="maxIceConcBoundError" value="1e-8"/>
+    <Config name="checkLostIntersectionArea" value="false"/>
+  </ConfigGroup>
+
+  <!-- Column -->
+  <ConfigGroup name="column_dimensions">
+    <Config name="nCategories" value="5"/>
+    <Config name="nIceLayers" value="7"/>
+    <Config name="nSnowLayers" value="1"/>
+    <Config name="nAerosols" value="1"/>
+  </ConfigGroup>
+
+  <!-- Column use sections-->
+  <ConfigGroup name="columnUseSections">
+     <Config name= "useColumnShortwave" value="true"/>
+     <Config name= "useColumnVerticalThermodynamics" value="true"/>
+     <Config name= "useColumnItdThermodynamics" value="true"/>
+     <Config name= "useColumnRidging" value="true"/>
+  </ConfigGroup>
+
+  <!-- Which column tracers to use -->
+  <ConfigGroup name="columnTracers">
+    <Config name="useIceAge" value="true"/>
+    <Config name="useFirstYearIce" value="true"/>
+    <Config name="useLevelIce" value="true"/>
+    <Config name="useCesmMeltponds" value="false"/>
+    <Config name="useLevelMeltponds" value="true"/>
+    <Config name="useTopoMeltponds" value="false"/>
+    <Config name="useAerosols" value="false"/>
+    <Config name="useVelocities" value="false"/>
+  </ConfigGroup>
+
+  <!-- Shortwave parameters -->
+  <ConfigGroup name="shortwave">
+    <Config name="shortwaveType" value="dEdd"/>
+    <Config name="albedoType" value="ccsm3"/>
+    <Config name="visibleIceAlbedo" value="0.78"/>
+    <Config name="infraredIceAlbedo" value="0.36"/>
+    <Config name="visibleSnowAlbedo" value="0.98"/>
+    <Config name="infraredSnowAlbedo" value="0.70"/>
+    <Config name="variableAlbedoThicknessLimit" value="0.3"/>
+    <Config name="iceShortwaveTuningParameter" value="0.0"/>
+    <Config name="pondShortwaveTuningParameter" value="0.0"/>
+    <Config name="snowShortwaveTuningParameter" value="1.5"/>
+    <Config name="tempChangeSnowGrainRadiusChange" value="1.5"/>
+    <Config name="maxMeltingSnowGrainRadius" value="1500.0"/>
+    <Config name="algaeAbsorptionCoefficient" value="0.6"/>
+  </ConfigGroup>
+
+  <!-- meltpond parameters -->
+  <ConfigGroup name="meltponds">
+    <Config name="snowToIceTransitionDepth" value="0.0"/>
+    <Config name="pondRefreezingType" value="hlid"/>
+    <Config name="pondFlushingTimescale" value="1.0e-3"/>
+    <Config name="minMeltwaterRetainedFraction" value="0.15"/>
+    <Config name="maxMeltwaterRetainedFraction" value="1.0"/>
+    <Config name="pondDepthToFractionRatio" value="0.8"/>
+    <Config name="snowOnPondIceTaperingParameter" value="0.03"/>
+    <Config name="criticalPondIceThickness" value="0.01"/>
+  </ConfigGroup>
+
+  <!-- vertical thermodynamic parameters -->
+  <ConfigGroup name="thermodynamics">
+    <Config name="thermodynamicsType" value="mushy"/>
+    <Config name="heatConductivityType" value="bubbly"/>
+    <Config name="rapidModeChannelRadius" value="0.5e-3"/>
+    <Config name="rapidModelCriticalRa" value="10.0"/>
+    <Config name="rapidModeAspectRatio" value="1.0"/>
+    <Config name="slowModeDrainageStrength" value="-5.0e-8"/>
+    <Config name="slowModeCriticalPorosity" value="0.05"/>
+    <Config name="congelationIcePorosity" value="0.85"/>
+  </ConfigGroup>
+
+  <!-- ice thickness distribution parameters -->
+  <ConfigGroup name="itd">
+    <Config name="itdConversionType" value="linear remap"/>
+    <Config name="categoryBoundsType" value="original"/>
+  </ConfigGroup>
+
+  <!-- ridging parameters -->
+  <ConfigGroup name="ridging">
+    <Config name="iceStrengthFormulation" value="Rothrock75"/>
+    <Config name="ridgingParticipationFunction" value="exponential"/>
+    <Config name="ridgingRedistributionFunction" value="exponential"/>
+    <Config name="ridigingEfoldingScale" value="3.0"/>
+    <Config name="ratioRidgingWorkToPE" value="17.0"/>
+  </ConfigGroup>
+
+  <!-- atmospheric parameters -->
+  <ConfigGroup name="atmosphere">
+    <Config name="atmosBoundaryMethod" value="ccsm3"/>
+    <Config name="calcSurfaceStresses" value="true"/>
+    <Config name="calcSurfaceTemperature" value="true"/>
+    <Config name="useFormDrag" value="false"/>
+    <Config name="useHighFrequencyCoupling" value="false"/>
+    <Config name="boundaryLayerIterationNumber" value="5"/>
+  </ConfigGroup>
+
+  <!-- oceanic parameters -->
+  <ConfigGroup name="ocean">
+    <Config name="oceanType" value="remap"/>
+    <Config name="updateOceanFluxes" value="false"/>
+    <Config name="useOceanMixedLayer" value="true"/>
+    <Config name="minFrictionVelocity" value="0.0005"/>
+    <Config name="oceanHeatTransferType" value="constant"/>
+    <Config name="seaFreezingTemperatureType" value="mushy"/>
+  </ConfigGroup>
+
+</Configs>

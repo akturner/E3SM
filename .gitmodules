@@ -68,3 +68,6 @@
 	path = components/ww3/src/WW3
 	url = git@github.com:E3SM-Project/WW3.git
 	branch = e3sm
+[submodule "components/demsi/DEMSI"]
+	path = components/demsi/DEMSI
+	url = git@github.com:DEMSI-Project/DEMSI.git
