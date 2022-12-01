@@ -1728,6 +1728,10 @@
 			possible_values=""
 			icepack_name="Cf"
 		/>
+		<nml_option name="config_use_ridge_forcing" type="logical" default_value="false" units="unitless"
+			description="Use time varying forcing of ridgeConvergence and ridgeShear for test cases."
+			possible_values="true or false"
+		/>
 	</nml_record>
 
 	<nml_record name="atmosphere" in_defaults="true">
@@ -2151,6 +2155,15 @@
 				input_interval="none"
 				immutable="true">
 			<var name="iceCoverage"/>
+		</stream>
+		<stream name="ridgingForcing"
+				type="input"
+				filename_template="forcing/ridging_forcing.nc"
+				filename_interval="none"
+				input_interval="none"
+				immutable="true">
+			<var name="ridgeConvergence"/>
+			<var name="ridgeShear"/>
 		</stream>
 
 		<!-- Aerosols input -->
@@ -5364,6 +5377,11 @@
 		     type="real"
 		     dimensions="nCategoriesP1"
 		     units="m"
+		/>
+		<var name="initialCategoryIceArea"
+		     type="real"
+		     dimensions="nCategories"
+		     units="1"
 		/>
 	</var_struct>
 

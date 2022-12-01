@@ -2445,6 +2445,14 @@ Valid values:
 Default: Defined in namelist_defaults.xml
 </entry>
 
+<entry id="config_use_ridge_forcing" type="logical"
+	category="ridging" group="ridging">
+Use time varying forcing of ridgeConvergence and ridgeShear for test cases.
+
+Valid values: true or false
+Default: Defined in namelist_defaults.xml
+</entry>
+
 
 <!-- atmosphere -->
 

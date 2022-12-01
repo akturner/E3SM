@@ -388,6 +388,7 @@
 <config_ridging_redistribution_function>'exponential'</config_ridging_redistribution_function>
 <config_ridiging_efolding_scale>3.0</config_ridiging_efolding_scale>
 <config_ratio_ridging_work_to_PE>17.0</config_ratio_ridging_work_to_PE>
+<config_use_ridge_forcing>false</config_use_ridge_forcing>
 
 <!-- atmosphere -->
 <config_atmos_boundary_method>'ccsm3'</config_atmos_boundary_method>

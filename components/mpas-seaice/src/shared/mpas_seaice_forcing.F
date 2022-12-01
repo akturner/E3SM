@@ -73,10 +73,12 @@ contains
 
     logical, pointer :: &
          config_use_forcing, &
-         config_use_data_icebergs
+         config_use_data_icebergs, &
+         config_use_ridge_forcing
 
     call MPAS_pool_get_config(domain % configs, "config_use_forcing", config_use_forcing)
     call MPAS_pool_get_config(domain % configs, "config_use_data_icebergs", config_use_data_icebergs)
+    call MPAS_pool_get_config(domain % configs, "config_use_ridge_forcing", config_use_ridge_forcing)
 
     if (config_use_forcing) then
 
@@ -89,7 +91,18 @@ contains
     endif
 
     ! init the data iceberg forcing
-    if (config_use_data_icebergs) call init_data_iceberg_forcing(domain, clock)
+    if (config_use_data_icebergs) then
+
+       call init_data_iceberg_forcing(domain, clock)
+
+    endif
+
+    ! init data forcing for ridging test case
+    if (config_use_ridge_forcing) then
+
+       call init_ridging_forcing(domain)
+
+    endif
 
   end subroutine seaice_forcing_init
 
@@ -412,10 +425,12 @@ contains
 
     logical, pointer :: &
          config_use_forcing, &
-         config_use_data_icebergs
+         config_use_data_icebergs, &
+         config_use_ridge_forcing
 
     call MPAS_pool_get_config(domain % configs, "config_use_forcing", config_use_forcing)
     call MPAS_pool_get_config(domain % configs, "config_use_data_icebergs", config_use_data_icebergs)
+    call MPAS_pool_get_config(domain % configs, "config_use_ridge_forcing", config_use_ridge_forcing)
 
     if (config_use_forcing) then
 
@@ -436,6 +451,15 @@ contains
     if (config_use_data_icebergs) then
 
        call data_iceberg_forcing(&
+            streamManager, &
+            domain)
+
+    endif
+
+    ! ridging forcing
+    if (config_use_ridge_forcing) then
+
+       call ridging_forcing(&
             streamManager, &
             domain)
 
@@ -2204,6 +2228,119 @@ contains
     enddo
 
   end subroutine get_data_iceberg_fluxes
+
+!-----------------------------------------------------------------------
+! ridging forcing
+!-----------------------------------------------------------------------
+
+!|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+!
+!  init_ridging_forcing
+!
+!> \brief
+!> \author Adrian K. Turner, LANL
+!> \date 28th November 2022
+!> \details
+!>
+!
+!-----------------------------------------------------------------------
+
+  subroutine init_ridging_forcing(domain)
+
+    type(domain_type) :: &
+         domain
+
+    logical, pointer :: &
+         config_do_restart
+
+    character(len=strKIND) :: &
+         forcingIntervalRidging, &
+         forcingReferenceTimeRidging
+
+    call MPAS_pool_get_config(domain % configs, "config_do_restart", config_do_restart)
+
+    ! create the ridging forcing group
+    call MPAS_forcing_init_group(&
+         seaiceForcingGroups, &
+         "seaice_ridging_forcing", &
+         domain, &
+         '0001-01-01_00:00:00', &
+         '0001-01-01_00:00:00', &
+         '0001-00-00_00:00:00', &
+         config_do_restart)
+
+    forcingIntervalRidging = "00-00-00_01:00:00"
+    forcingReferenceTimeRidging = "0001-01-01_00:00:00"
+
+    call MPAS_forcing_init_field(&
+         domain % streamManager, &
+         seaiceForcingGroups, &
+         "seaice_ridging_forcing", &
+         "ridgeConvergence", &
+         "ridgingForcing", &
+         "ridging", &
+         "ridgeConvergence", &
+         "linear", &
+         forcingReferenceTimeRidging, &
+         forcingIntervalRidging, &
+         "next")
+
+    call MPAS_forcing_init_field(&
+         domain % streamManager, &
+         seaiceForcingGroups, &
+         "seaice_ridging_forcing", &
+         "ridgeShear", &
+         "ridgingForcing", &
+         "ridging", &
+         "ridgeShear", &
+         "linear", &
+         forcingReferenceTimeRidging, &
+         forcingIntervalRidging, &
+         "next")
+
+    call MPAS_forcing_init_field_data(&
+         seaiceForcingGroups, &
+         "seaice_ridging_forcing", &
+         domain % streamManager, &
+         config_do_restart, &
+         .false.)
+
+  end subroutine init_ridging_forcing
+
+!|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+!
+!  ridging_forcing
+!
+!> \brief
+!> \author Adrian K. Turner, LANL
+!> \date 28th November 2022
+!> \details
+!>
+!
+!-----------------------------------------------------------------------
+
+  subroutine ridging_forcing(&
+       streamManager, &
+       domain)
+
+    type(MPAS_streamManager_type), intent(inout) :: &
+         streamManager
+
+    type(domain_type) :: &
+         domain
+
+    real(kind=RKIND), pointer :: &
+         config_dt
+
+    call mpas_pool_get_config(domain % configs, 'config_dt', config_dt)
+
+    call MPAS_forcing_get_forcing(&
+         seaiceForcingGroups, &
+         "seaice_ridging_forcing", &
+         streamManager, &
+         config_dt)
+
+  end subroutine ridging_forcing
 
 !-----------------------------------------------------------------------
 ! coupler fluxes initialization

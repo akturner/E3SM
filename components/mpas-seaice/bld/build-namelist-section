@@ -407,6 +407,7 @@ add_default($nl, 'config_ridging_participation_function');
 add_default($nl, 'config_ridging_redistribution_function');
 add_default($nl, 'config_ridiging_efolding_scale');
 add_default($nl, 'config_ratio_ridging_work_to_PE');
+add_default($nl, 'config_use_ridge_forcing');
 
 ##############################
 # Namelist group: atmosphere #

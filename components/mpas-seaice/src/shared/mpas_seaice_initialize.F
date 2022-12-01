@@ -1070,10 +1070,11 @@ contains
          airTemperature, &
          seaSurfaceTemperature, &
          seaFreezingTemperature, &
-         categoryThicknessLimits
+         categoryThicknessLimits, &
+         initialCategoryIceArea
 
-      integer, dimension(:), pointer :: &
-           landIceMask
+    integer, dimension(:), pointer :: &
+         landIceMask
 
     real(kind=RKIND), dimension(:,:), pointer :: &
          initialSalinityProfile, &
@@ -1093,7 +1094,6 @@ contains
          config_initial_latitude_south
 
     real(kind=RKIND), dimension(:), allocatable :: &
-         initialCategoryIceArea, &
          initialCategoryIceThickness
 
     integer :: &
@@ -1136,91 +1136,34 @@ contains
     call MPAS_pool_get_array(ocean_coupling, "landIceMask", landIceMask)
 
     call MPAS_pool_get_array(initial, "categoryThicknessLimits", categoryThicknessLimits)
+    call MPAS_pool_get_array(initial, "initialCategoryIceArea", initialCategoryIceArea)
     call MPAS_pool_get_array(initial, "initialSalinityProfile", initialSalinityProfile)
     call MPAS_pool_get_array(initial, "initialMeltingTemperatureProfile", initialMeltingTemperatureProfile)
 
-    ! initial thickness categories
-    categoryThicknessLimits(1) = 0.0_RKIND
-    categoryThicknessLimits(2) = 0.6_RKIND
-    categoryThicknessLimits(3) = 1.4_RKIND
-    categoryThicknessLimits(4) = 2.4_RKIND
-    categoryThicknessLimits(5) = 3.6_RKIND
-
-    ! initial volumes and areas
-    allocate(initialCategoryIceArea(nCategories))
     allocate(initialCategoryIceThickness(nCategories))
 
-    initialCategoryIceArea(1) = 0.05_RKIND
-    initialCategoryIceArea(2) = 0.1_RKIND
-    initialCategoryIceArea(3) = 0.3_RKIND
-    initialCategoryIceArea(4) = 0.35_RKIND
-    initialCategoryIceArea(5) = 0.2_RKIND
-
-    initialCategoryIceThickness(1) = (categoryThicknessLimits(1) + categoryThicknessLimits(1)) * 0.5_RKIND
-    initialCategoryIceThickness(2) = (categoryThicknessLimits(2) + categoryThicknessLimits(2)) * 0.5_RKIND
-    initialCategoryIceThickness(3) = (categoryThicknessLimits(3) + categoryThicknessLimits(3)) * 0.5_RKIND
-    initialCategoryIceThickness(4) = (categoryThicknessLimits(4) + categoryThicknessLimits(4)) * 0.5_RKIND
+    initialCategoryIceThickness(1) = (categoryThicknessLimits(1) + categoryThicknessLimits(2)) * 0.5_RKIND
+    initialCategoryIceThickness(2) = (categoryThicknessLimits(2) + categoryThicknessLimits(3)) * 0.5_RKIND
+    initialCategoryIceThickness(3) = (categoryThicknessLimits(3) + categoryThicknessLimits(4)) * 0.5_RKIND
+    initialCategoryIceThickness(4) = (categoryThicknessLimits(4) + categoryThicknessLimits(5)) * 0.5_RKIND
     initialCategoryIceThickness(5) = categoryThicknessLimits(5) + 1.0_RKIND
 
     do iCell = 1, nCellsSolve
 
-       if (seaSurfaceTemperature(iCell) <= seaFreezingTemperature(iCell) + 0.2_RKIND .and. &
-          (latCell(iCell) > config_initial_latitude_north * seaiceDegreesToRadians .or. &
-           latCell(iCell) < config_initial_latitude_south * seaiceDegreesToRadians) .and. &
-          landIceMask(iCell) == 0) then
+       ! has ice
+       do iCategory = 1, nCategories
 
-          ! has ice
-          do iCategory = 1, nCategories
-
-             iceAreaCategory(1,iCategory,iCell)    = initialCategoryIceArea(iCategory)
-             iceVolumeCategory(1,iCategory,iCell)  = initialCategoryIceArea(iCategory) * initialCategoryIceThickness(iCategory)
-             snowVolumeCategory(1,iCategory,iCell) = min(iceAreaCategory(1,iCategory,iCell) * initialCategorySnowThickness, &
+          iceAreaCategory(1,iCategory,iCell)    = initialCategoryIceArea(iCategory)
+          iceVolumeCategory(1,iCategory,iCell)  = initialCategoryIceArea(iCategory) * initialCategoryIceThickness(iCategory)
+          snowVolumeCategory(1,iCategory,iCell) = min(iceAreaCategory(1,iCategory,iCell) * initialCategorySnowThickness, &
                                                          0.2_RKIND * iceVolumeCategory(1,iCategory,iCell))
 
-             call colpkg_init_trcr(&
-                  airTemperature(iCell), &
-                  seaFreezingTemperature(iCell), &
-                  initialSalinityProfile(:,iCell), &
-                  initialMeltingTemperatureProfile(:,iCell), &
-                  surfaceTemperature(1,iCategory,iCell), &
-                  nIceLayers, &
-                  nSnowLayers, &
-                  iceEnthalpy(:,iCategory,iCell), &
-                  snowEnthalpy(:,iCategory,iCell))
-
-          enddo ! iCategory
-
-       else
-
-          ! no ice
-          iceAreaCategory(1,:,iCell)    = 0.0_RKIND
-          iceVolumeCategory(1,:,iCell)  = 0.0_RKIND
-          snowVolumeCategory(1,:,iCell) = 0.0_RKIND
-
-          surfaceTemperature(1,:,iCell) = seaFreezingTemperature(iCell)
-          do iSnowLayer = 1, nSnowLayers
-             snowEnthalpy(iSnowLayer,:,iCell) = colpkg_enthalpy_snow(0.0_RKIND)
-          end do
-
-       endif
+       enddo ! iCategory
 
     enddo ! iCell
 
     ! clean up
-    deallocate(initialCategoryIceArea)
     deallocate(initialCategoryIceThickness)
-
-    ! get vertical salinity profiles
-    call MPAS_pool_get_subpool(block % structs, "initial", initial)
-    call MPAS_pool_get_array(initial, "initialSalinityProfile", initialSalinityProfile)
-
-    do iCell = 1, nCellsSolve
-       do iCategory = 1, nCategories
-          do iIceLayer = 1, nIceLayers
-             iceSalinity(iIceLayer,iCategory,iCell) = initialSalinityProfile(iIceLayer,iCell)
-          enddo ! iIceLayer
-       enddo ! iCategory
-    enddo ! iCell
 
   end subroutine init_ice_ridging!}}}
 
