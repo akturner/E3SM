@@ -9,6 +9,9 @@ FRAMEWORK_DIR = ../../../mpas-framework/src
 OCEAN_SHARED_INCLUDES = -I$(FRAMEWORK_DIR)/framework -I$(FRAMEWORK_DIR)/external/esmf_time_f90 -I$(FRAMEWORK_DIR)/operators
 OCEAN_SHARED_INCLUDES += -I$(PWD)/shared -I$(PWD)/analysis_members -I$(PWD)/mode_forward -I$(PWD)/mode_analysis
 OCEAN_SHARED_INCLUDES += -I$(PWD)/BGC -I$(PWD)/MARBL/include -I$(PWD)/cvmix/src/shared -I$(PWD)/gotm/build -I$(PWD)/gotm/build/modules -I$(PWD)/SHTNS -I$(PWD)/ppr/src
+ifeq "$(SEAICE_COLUMN)" "true"
+	OCEAN_SHARED_INCLUDES += -I$(PWD)/seaice_driver -I$(PWD)/seaice_column
+endif
 ifneq "$(EXCLUDE_INIT_MODE)" "true"
 	OCEAN_SHARED_INCLUDES += -I$(PWD)/mode_init
 endif
@@ -22,8 +25,12 @@ ifneq "$(EXCLUDE_INIT_MODE)" "true"
 	OCEAN_SHARED_INCLUDES += -I$(PWD)/mode_init
 endif
 
-all: shared libcvmix analysis_members libBGC libMARBL libgotm libfftw libshtns libppr
-	(cd mode_forward; $(MAKE) FCINCLUDES="$(FCINCLUDES) $(OCEAN_SHARED_INCLUDES)" all )
+ifeq "$(SEAICE_COLUMN)" "true"
+	override CPPFLAGS += -DSEAICE_COLUMN
+endif
+
+all: shared libcvmix analysis_members libBGC libMARBL libgotm libfftw libshtns libppr libseaice
+	(cd mode_forward; $(MAKE) CPPFLAGS="$(CPPFLAGS)" FCINCLUDES="$(FCINCLUDES) $(OCEAN_SHARED_INCLUDES)" all )
 	(cd mode_analysis; $(MAKE) FCINCLUDES="$(FCINCLUDES) $(OCEAN_SHARED_INCLUDES)" all )
 ifneq "$(EXCLUDE_INIT_MODE)" "true"
 	(cd mode_init; $(MAKE) FCINCLUDES="$(FCINCLUDES) $(OCEAN_SHARED_INCLUDES)" all )
@@ -32,7 +39,7 @@ endif
 	if [ -e libdycore.a ]; then \
 		($(RM) libdycore.a) \
 	fi
-	ar -ru libdycore.a `find . -type f -name "*.o"`
+	ar -ru libdycore.a `find -L . -type f -name "*.o"`
 
 core_reg:
 	$(CPP) $(CPPFLAGS) $(CPPLOCALFLAGS) $(CPPINCLUDES) Registry.xml > Registry_processed.xml
@@ -138,7 +145,13 @@ libppr:
 		(pwd ; echo "Missing core_ocean/ppr/.git, did you forget to 'git submodule update --init --recursive' ?"; exit 1) \
 	fi
 
-shared: libcvmix libBGC libMARBL libgotm libshtns libfftw libppr
+libseaice:
+ifeq "$(SEAICE_COLUMN)" "true"
+	(cd seaice_column; $(MAKE))
+	(cd seaice_driver; $(MAKE))
+endif
+
+shared: libcvmix libBGC libMARBL libgotm libshtns libfftw libppr libseaice
 	(cd shared; $(MAKE) FCINCLUDES="$(FCINCLUDES) $(OCEAN_SHARED_INCLUDES)")
 
 analysis_members: libcvmix shared libgotm
@@ -166,6 +179,10 @@ clean:
 	if [ -e FFTW/.git ]; then \
 		(cd FFTW; make clean; rm -f $(SHTNS_DIR)/lib/libfftw3*) \
 	fi
+ifeq "$(SEAICE_COLUMN)" "true"
+	(cd seaice_column; $(MAKE) clean)
+	(cd seaice_driver; $(MAKE) clean)
+endif
 	(cd mode_forward; $(MAKE) clean)
 	(cd mode_analysis; $(MAKE) clean)
 	(cd mode_init; $(MAKE) clean)

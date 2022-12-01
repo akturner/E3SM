@@ -3380,6 +3380,11 @@ contains
     call ocean_stress_final(domain)
     call mpas_timer_stop("ocn stress final")
 
+    ! calculate cell velocity for high frequency coupling
+    call mpas_timer_start("cell velocity")
+    call cell_velocity(domain)
+    call mpas_timer_stop("cell velocity")
+
   end subroutine velocity_solver_post_subcycle
 
 !|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -3850,6 +3855,71 @@ contains
 
   end subroutine ocean_stress_final
 
-  !-----------------------------------------------------------------------
+!|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+!
+!  cell_velocity
+!
+!> \brief
+!> \author Adrian K. Turner, LANL
+!> \date 30th November 2022
+!> \details
+!>
+!
+!-----------------------------------------------------------------------
+
+  subroutine cell_velocity(domain)
+
+    use seaice_mesh, only: &
+         seaice_interpolate_vertex_to_cell
+
+    type(domain_type), intent(inout) :: &
+         domain
+
+    type(block_type), pointer :: &
+         blockPtr
+
+    type(MPAS_pool_type), pointer :: &
+         meshPool, &
+         boundaryPool, &
+         velocitySolverPool
+
+    logical, pointer :: &
+         config_use_high_frequency_coupling
+
+    real(kind=RKIND), dimension(:), pointer :: &
+         uVelocity, &
+         vvelocity, &
+         uVelocityCell, &
+         vvelocityCell
+
+    call MPAS_pool_get_config(domain % configs, "config_use_high_frequency_coupling", &
+                                                 config_use_high_frequency_coupling)
+
+    ! high frequency coupling needs to cell center velocity
+    if (config_use_high_frequency_coupling) then
+
+       blockPtr => domain % blocklist
+       do while (associated(blockPtr))
+
+          call MPAS_pool_get_subpool(blockPtr % structs, "mesh", meshPool)
+          call MPAS_pool_get_subpool(blockPtr % structs, "boundary", boundaryPool)
+          call MPAS_pool_get_subpool(blockPtr % structs, "velocity_solver", velocitySolverPool)
+
+          call MPAS_pool_get_array(velocitySolverPool, "uVelocity", uVelocity)
+          call MPAS_pool_get_array(velocitySolverPool, "vVelocity", vVelocity)
+          call MPAS_pool_get_array(velocitySolverPool, "uVelocityCell", uVelocityCell)
+          call MPAS_pool_get_array(velocitySolverPool, "vVelocityCell", vVelocityCell)
+
+          call seaice_interpolate_vertex_to_cell(meshPool, boundaryPool, uVelocityCell, uVelocity)
+          call seaice_interpolate_vertex_to_cell(meshPool, boundaryPool, vVelocityCell, vVelocity)
+
+          blockPtr => blockPtr % next
+       end do
+
+    endif ! config_use_high_frequency_coupling
+
+  end subroutine cell_velocity
+
+!-----------------------------------------------------------------------
 
 end module seaice_velocity_solver

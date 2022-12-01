@@ -1287,9 +1287,6 @@ contains
     use seaice_constants, only: &
          seaicePuny
 
-    use seaice_mesh, only: &
-         seaice_interpolate_vertex_to_cell
-
     type(domain_type), intent(inout) :: domain
 
     type(MPAS_clock_type), intent(in) :: clock
@@ -1314,8 +1311,7 @@ contains
          ponds, &
          aerosols, &
          diagnostics, &
-         snow, &
-         boundary
+         snow
 
     ! configs
     real(kind=RKIND), pointer :: &
@@ -1324,8 +1320,7 @@ contains
     logical, pointer :: &
          config_use_aerosols, &
          config_use_prescribed_ice, &
-         config_use_snow_liquid_ponds, &
-         config_use_high_frequency_coupling
+         config_use_snow_liquid_ponds
 
     ! dimensions
     integer, pointer :: &
@@ -1342,8 +1337,6 @@ contains
          iceAreaCell, &
          iceVolumeCell, &
          snowVolumeCell, &
-         uVelocity, &
-         vvelocity, &
          uVelocityCell, &
          vvelocityCell, &
          uAirVelocity, &
@@ -1518,13 +1511,11 @@ contains
        call MPAS_pool_get_subpool(block % structs, "aerosols", aerosols)
        call MPAS_pool_get_subpool(block % structs, "diagnostics", diagnostics)
        call MPAS_pool_get_subpool(block % structs, "snow", snow)
-       call MPAS_pool_get_subpool(block % structs, "boundary", boundary)
 
        call MPAS_pool_get_config(block % configs, "config_dt", config_dt)
        call MPAS_pool_get_config(block % configs, "config_use_aerosols", config_use_aerosols)
        call MPAS_pool_get_config(block % configs, "config_use_prescribed_ice", config_use_prescribed_ice)
        call MPAS_pool_get_config(block % configs, "config_use_snow_liquid_ponds", config_use_snow_liquid_ponds)
-       call MPAS_pool_get_config(block % configs, "config_use_high_frequency_coupling", config_use_high_frequency_coupling)
 
        call MPAS_pool_get_dimension(mesh, "nCellsSolve", nCellsSolve)
        call MPAS_pool_get_dimension(mesh, "nCategories", nCategories)
@@ -1567,8 +1558,6 @@ contains
        call MPAS_pool_get_array(tracers, "snowLiquidMass", snowLiquidMass, 1)
        call MPAS_pool_get_array(tracers, "snowGrainRadius", snowGrainRadius, 1)
 
-       call MPAS_pool_get_array(velocity_solver, "uVelocity", uVelocity)
-       call MPAS_pool_get_array(velocity_solver, "vVelocity", vVelocity)
        call MPAS_pool_get_array(velocity_solver, "uVelocityCell", uVelocityCell)
        call MPAS_pool_get_array(velocity_solver, "vVelocityCell", vVelocityCell)
        call MPAS_pool_get_array(velocity_solver, "airStressCellU", airStressCellU)
@@ -1676,12 +1665,6 @@ contains
        call MPAS_pool_get_array(snow, "snowLossToLeads", snowLossToLeads)
        call MPAS_pool_get_array(snow, "snowMeltMassCell", snowMeltMassCell)
        call MPAS_pool_get_array(snow, "snowMeltMassCategory", snowMeltMassCategory)
-
-       ! high frequency coupling needs to cell center velocity
-       if (config_use_high_frequency_coupling) then
-          call seaice_interpolate_vertex_to_cell(mesh, boundary, uVelocityCell, uVelocity)
-          call seaice_interpolate_vertex_to_cell(mesh, boundary, vVelocityCell, vVelocity)
-       endif
 
        ! aerosols
        if (config_use_aerosols) then

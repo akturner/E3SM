@@ -95,6 +95,10 @@ module ocn_forward_mode
    use ocn_constants
    use ocn_config
 
+#ifdef SEAICE_COLUMN
+   use ocn_seaice_column
+#endif
+
    implicit none
    private
 
@@ -506,6 +510,11 @@ module ocn_forward_mode
               MPAS_LOG_ERR, masterOnly=.true., flushNow=.true.)
          return
       endif
+
+#ifdef SEAICE_COLUMN
+      ! Initialize sea ice column package
+      call ocn_init_seaice(domain)
+#endif
 
    !--------------------------------------------------------------------
 
