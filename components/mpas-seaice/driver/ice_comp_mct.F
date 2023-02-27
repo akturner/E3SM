@@ -1449,6 +1449,15 @@ contains
       n = n + nCellsSolve
       block_ptr => block_ptr % next
     end do
+    block_ptr => domain % blocklist
+    do while(associated(block_ptr))
+      call mpas_pool_get_subpool(block_ptr % structs, 'mesh', meshPool)
+
+      call mpas_pool_get_dimension(meshPool, 'nCellsCulled', nCellsSolve)
+
+      n = n + nCellsSolve
+      block_ptr => block_ptr % next
+    end do
 
     ! Determine total number of cells across all processors
     lsize = n
@@ -1463,7 +1472,21 @@ contains
 
       call mpas_pool_get_dimension(meshPool, 'nCellsSolve', nCellsSolve)
 
-      call mpas_pool_get_array(meshPool, 'indexToCellID', indexToCellID)
+      call mpas_pool_get_array(meshPool, 'indexToOceanCellID', indexToCellID)
+
+      do i = 1, nCellsSolve
+        n = n + 1
+        gindex(n) = indexToCellID(i)
+      end do
+      block_ptr => block_ptr % next
+    end do
+    block_ptr => domain % blocklist
+    do while(associated(block_ptr))
+      call mpas_pool_get_subpool(block_ptr % structs, 'mesh', meshPool)
+
+      call mpas_pool_get_dimension(meshPool, 'nCellsCulled', nCellsSolve)
+
+      call mpas_pool_get_array(meshPool, 'indexToCulledCellID', indexToCellID)
 
       do i = 1, nCellsSolve
         n = n + 1
@@ -1586,6 +1609,22 @@ contains
 
        block_ptr => block_ptr % next
     end do
+    block_ptr => domain % blocklist
+    do while(associated(block_ptr))
+       call mpas_pool_get_subpool(block_ptr % structs, 'mesh', meshPool)
+
+       call mpas_pool_get_dimension(meshPool, 'nCellsCulled', nCellsSolve)
+
+       call mpas_pool_get_array(meshPool, 'lonCellCulled', lonCell)
+
+       do i = 1, nCellsSolve
+          n = n + 1
+          data(n) = lonCell(i) * r2d
+       end do
+
+       block_ptr => block_ptr % next
+    end do
+
     call mct_gGrid_importRattr(dom_i,"lon",data,lsize)
 
     n = 0
@@ -1596,6 +1635,20 @@ contains
        call mpas_pool_get_dimension(meshPool, 'nCellsSolve', nCellsSolve)
 
        call mpas_pool_get_array(meshPool, 'latCell', latCell)
+
+       do i = 1, nCellsSolve
+          n = n + 1
+          data(n) = latCell(i) * r2d
+       end do
+       block_ptr => block_ptr % next
+    end do
+    block_ptr => domain % blocklist
+    do while(associated(block_ptr))
+       call mpas_pool_get_subpool(block_ptr % structs, 'mesh', meshPool)
+
+       call mpas_pool_get_dimension(meshPool, 'nCellsCulled', nCellsSolve)
+
+       call mpas_pool_get_array(meshPool, 'latCellCulled', latCell)
 
        do i = 1, nCellsSolve
           n = n + 1
@@ -1621,9 +1674,25 @@ contains
        end do
        block_ptr => block_ptr % next
     end do
+    block_ptr => domain % blocklist
+    do while(associated(block_ptr))
+       call mpas_pool_get_subpool(block_ptr % structs, 'mesh', meshPool)
+
+       call mpas_pool_get_dimension(meshPool, 'nCellsCulled', nCellsSolve)
+
+       call mpas_pool_get_array(meshPool, 'areaCellCulled', areaCell)
+
+       call mpas_pool_get_config(meshPool, 'sphere_radius', sphere_radius)
+       do i = 1, nCellsSolve
+          n = n + 1
+          data(n) = areaCell(i) / (sphere_radius * sphere_radius)
+       end do
+       block_ptr => block_ptr % next
+    end do
     call mct_gGrid_importRattr(dom_i,"area",data,lsize)
 
     ! Build mask and frac based on landIceMask
+    n = 0
     block_ptr => domain % blocklist
     do while ( associated(block_ptr) )
        call mpas_pool_get_subpool(block_ptr % structs, 'mesh', meshPool)
@@ -1635,17 +1704,31 @@ contains
 
        if ( associated(landIceMask) ) then
           do i = 1, nCellsSolve
+             n = n + 1
              if ( landIceMask(i) == 1 ) then
-                data(i) = 0.0_RKIND
+                data(n) = 0.0_RKIND
              else
-                data(i) = 1.0_RKIND
+                data(n) = 1.0_RKIND
              end if
           end do
        else
           do i = 1, nCellsSolve
-             data(i) = 1.0_RKIND
+             n = n + 1
+             data(n) = 1.0_RKIND
           end do
        end if
+
+       block_ptr => block_ptr % next
+    end do
+    block_ptr => domain % blocklist
+    do while ( associated(block_ptr) )
+       call mpas_pool_get_subpool(block_ptr % structs, 'mesh', meshPool)
+
+       call mpas_pool_get_dimension(meshPool, 'nCellsCulled', nCellsSolve)
+       do i = 1, nCellsSolve
+          n = n + 1
+          data(n) = 1.0_RKIND
+       end do
 
        block_ptr => block_ptr % next
     end do

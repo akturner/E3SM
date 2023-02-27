@@ -5,6 +5,9 @@
 		<dim name="nCells"
 			description="The number of polygons in the primary grid."
 		/>
+		<dim name="nCellsCulled" decomposition="uniform"
+			description="The number of culled polygons in the primary grid."
+		/>
 		<dim name="nEdges"
 			description="The number of edge midpoints in either the primary or dual grid."
 		/>
@@ -1875,6 +1878,11 @@
 			<var name="yCell"/>
 			<var name="zCell"/>
 			<var name="indexToCellID"/>
+			<var name="indexToOceanCellID"/>
+			<var name="indexToCulledCellID"/>
+			<var name="latCellCulled"/>
+			<var name="lonCellCulled"/>
+			<var name="areaCellCulled"/>
 			<var name="latEdge"/>
 			<var name="lonEdge"/>
 			<var name="xEdge"/>
@@ -2342,6 +2350,34 @@
 		     type="integer"
 		     dimensions="nCells"
 		     description="List of global cell IDs."
+		/>
+		<var name="indexToOceanCellID"
+		     type="integer"
+		     dimensions="nCells"
+		     description="List of ocean mesh global cell IDs."
+		/>
+		<var name="indexToCulledCellID"
+		     type="integer"
+		     dimensions="nCellsCulled"
+		     description="List of culled mesh globals cell IDs."
+		/>
+		<var name="latCellCulled"
+		     type="real"
+		     dimensions="nCellsCulled"
+		     units="radians"
+		     description="Latitude location of culled cell centers in radians."
+		/>
+		<var name="lonCellCulled"
+		     type="real"
+		     dimensions="nCellsCulled"
+		     units="radians"
+		     description="Longitude location of culled cell centers in radians."
+		/>
+		<var name="areaCellCulled"
+		     type="real"
+		     dimensions="nCellsCulled"
+		     units="m2"
+		     description="Area of each cell in the primary grid."
 		/>
 		<var name="latEdge"
 		     type="real"
