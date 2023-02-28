@@ -95,6 +95,9 @@ module seaice_core_interface
 
       ierr = 0
 
+      ! mesh
+      call setup_packages_mesh(configPool, packagePool, ierr)
+
       ! dynamics
       call setup_packages_dynamics(configPool, packagePool, ierr)
 
@@ -111,6 +114,42 @@ module seaice_core_interface
       call setup_packages_other(configPool, packagePool, ierr)
 
    end function seaice_setup_packages!}}}
+
+   !***********************************************************************
+   !
+   !  routine setup_packages_mesh
+   !
+   !> \brief
+   !> \author  Adrian K. Turner
+   !> \date    27th February 2023
+   !> \details Set packages for mesh related quantities
+   !>
+   !
+   !-----------------------------------------------------------------------
+
+   subroutine setup_packages_mesh(configPool, packagePool, ierr)!{{{
+
+     type (mpas_pool_type), intent(in) :: configPool
+     type (mpas_pool_type), intent(in) :: packagePool
+     integer, intent(out) :: ierr
+
+     logical, pointer :: &
+          config_use_culled_mesh
+
+     logical, pointer :: &
+          pkgCulledMeshActive
+
+     call MPAS_pool_get_config(configPool, "config_use_culled_mesh", config_use_culled_mesh)
+
+     call MPAS_pool_get_package(packagePool, "pkgCulledMeshActive", pkgCulledMeshActive)
+
+     if (config_use_culled_mesh) then
+
+        pkgCulledMeshActive = .true.
+
+     endif
+
+   end subroutine setup_packages_mesh!}}}
 
    !***********************************************************************
    !

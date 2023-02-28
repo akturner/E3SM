@@ -401,6 +401,10 @@
 			description="Determines if mpi barriers are used and timed before halo exchanges."
 			possible_values=".true. or .false."
 		/>
+		<nml_option name="config_use_culled_mesh" type="logical" default_value="false" units="unitless"
+			description="Allow sea ice to occupy subset of ocean mesh in E3SM"
+			possible_values=".true. or .false."
+		/>
 	</nml_record>
 	<nml_record name="restart" in_defaults="true">
 		<nml_option name="config_do_restart" type="logical" default_value="false" units="unitless"
@@ -2351,34 +2355,6 @@
 		     dimensions="nCells"
 		     description="List of global cell IDs."
 		/>
-		<var name="indexToOceanCellID"
-		     type="integer"
-		     dimensions="nCells"
-		     description="List of ocean mesh global cell IDs."
-		/>
-		<var name="indexToCulledCellID"
-		     type="integer"
-		     dimensions="nCellsCulled"
-		     description="List of culled mesh globals cell IDs."
-		/>
-		<var name="latCellCulled"
-		     type="real"
-		     dimensions="nCellsCulled"
-		     units="radians"
-		     description="Latitude location of culled cell centers in radians."
-		/>
-		<var name="lonCellCulled"
-		     type="real"
-		     dimensions="nCellsCulled"
-		     units="radians"
-		     description="Longitude location of culled cell centers in radians."
-		/>
-		<var name="areaCellCulled"
-		     type="real"
-		     dimensions="nCellsCulled"
-		     units="m2"
-		     description="Area of each cell in the primary grid."
-		/>
 		<var name="latEdge"
 		     type="real"
 		     dimensions="nEdges"
@@ -2560,7 +2536,41 @@
 		/>
 	</var_struct>
 
+	<var_struct name="mesh_culled" time_levs="1" packages="pkgCulledMesh">
+		<var name="indexToOceanCellID"
+		     type="integer"
+		     dimensions="nCells"
+		     description="List of ocean mesh global cell IDs."
+		/>
+		<var name="indexToCulledCellID"
+		     type="integer"
+		     dimensions="nCellsCulled"
+		     description="List of culled mesh globals cell IDs."
+		/>
+		<var name="latCellCulled"
+		     type="real"
+		     dimensions="nCellsCulled"
+		     units="radians"
+		     description="Latitude location of culled cell centers in radians."
+		/>
+		<var name="lonCellCulled"
+		     type="real"
+		     dimensions="nCellsCulled"
+		     units="radians"
+		     description="Longitude location of culled cell centers in radians."
+		/>
+		<var name="areaCellCulled"
+		     type="real"
+		     dimensions="nCellsCulled"
+		     units="m2"
+		     description="Area of each cell in the primary grid."
+		/>
+	</var_struct>
+
 	<packages>
+
+		<!-- mesh packages -->
+		<package name="pkgCulledMesh" description=""/>
 
 		<!-- dynamics packages -->
 		<package name="pkgWeak" description=""/>
