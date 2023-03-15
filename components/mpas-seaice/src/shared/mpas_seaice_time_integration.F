@@ -72,6 +72,9 @@ contains
     use seaice_special_boundaries, only: &
          seaice_set_special_boundaries_tracers
 
+    use seaice_particles, only: &
+         seaice_particles_run
+
     type(domain_type), intent(inout) :: &
          domain !< Input/Output:
 
@@ -171,6 +174,9 @@ contains
 
     ! tracer special boundaries
     call seaice_set_special_boundaries_tracers(domain)
+
+    ! particles
+    call seaice_particles_run(domain)
 
   end subroutine seaice_timestep!}}}
 

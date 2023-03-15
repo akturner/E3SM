@@ -95,6 +95,8 @@ module mpas_io_streams
 
       integer :: io_err
 
+call mpas_log_write("MPAS_createStream")
+
       if (present(ierr)) ierr = MPAS_STREAM_NOERR
 
 
@@ -493,7 +495,7 @@ module mpas_io_streams
       integer, pointer :: indexDimension
       character (len=StrKIND) :: elementName, elementNamePlural
       logical :: meshFieldDim
-
+call mpas_log_write("MPAS_streamAddField_1dInteger")
       if (present(ierr)) ierr = MPAS_STREAM_NOERR
 
       !
@@ -514,11 +516,11 @@ module mpas_io_streams
          fieldName => field % fieldName
       end if
 
-!call mpas_log_write('... Adding field '//trim(fieldName)//' to stream')
+call mpas_log_write('... Adding field '//trim(fieldName)//' to stream')
 
       ndims = size(field % dimSizes)
 
-!call mpas_log_write('... field has $i dimensions', intArgs=(/ndims/))
+call mpas_log_write('... field has $i dimensions', intArgs=(/ndims/))
 
       !
       ! Determine whether the field is decomposed, the indices that are owned by this task's blocks,
@@ -537,6 +539,7 @@ module mpas_io_streams
             else
                fieldName => field % constituentNames(i)
             end if
+call mpas_log_write("MPAS_streamAddField_generic: $i $i",intArgs=(/totalDimSize, globalDimSize/))
             call MPAS_streamAddField_generic(stream, trim(fieldName), MPAS_IO_INT, dimNames0, &
                                              dimSizes0, field % hasTimeDimension, field % isDecomposed, totalDimSize, globalDimSize, &
                                              indices, ierr=io_err)
@@ -547,6 +550,10 @@ module mpas_io_streams
          end do
       else
          nullify(isAvailable)
+call mpas_log_write("MPAS_streamAddField_generic: $i $i",intArgs=(/totalDimSize, globalDimSize/))
+do i = 1, size(indices)
+   call mpas_log_write("MPAS_streamAddField_generic: $i $i",intArgs=(/i, indices(i)/))
+enddo
          call MPAS_streamAddField_generic(stream, trim(fieldName), MPAS_IO_INT, field % dimNames, field % dimSizes, &
                                           field % hasTimeDimension, field % isDecomposed, totalDimSize, globalDimSize, indices, ierr=io_err)
          if (io_err == MPAS_STREAM_NOERR) then
@@ -585,7 +592,7 @@ module mpas_io_streams
       new_field_list_node % int1dField => field
       new_field_list_node % isAvailable => isAvailable
 
-!call mpas_log_write('... done adding field')
+call mpas_log_write('... done adding field')
 
    end subroutine MPAS_streamAddField_1dInteger
 
@@ -1879,19 +1886,19 @@ module mpas_io_streams
 
       ndims = size(dimNames)
 
-!call mpas_log_write('... field has $i dimensions', intArgs=(/ndims/))
+call mpas_log_write('... field has $i dimensions', intArgs=(/ndims/))
 
       allocate(new_field_list_node)
       nullify(new_field_list_node % next)
 
       if (stream % ioDirection == MPAS_IO_WRITE) then
-!call mpas_log_write('... defining field')
+call mpas_log_write('... defining field')
 
          !
          ! Define inner dimensions
          !
          do idim = 1, ndims-1
-!call mpas_log_write('... defining dimension '// trim(dimNames(idim))//" $i", intArgs=(/ dimSizes(idim)/))
+call mpas_log_write('... defining dimension '// trim(dimNames(idim))//" $i", intArgs=(/ dimSizes(idim)/))
             write(dimNamesLocal(idim),'(a)') dimNames(idim)
             call MPAS_io_def_dim(stream % fileHandle, trim(dimNames(idim)), dimSizes(idim), io_err)
             call MPAS_io_err_mesg(io_err, .false.)
@@ -1917,7 +1924,7 @@ module mpas_io_streams
          new_field_list_node % isDecomposed = isDecomposed
 
          if (ndims > 0) then
-!call mpas_log_write('... defining dimension '// trim(dimNames(idim))//" $i", intArgs=(/ globalDimSize/))
+call mpas_log_write('... defining dimension '// trim(dimNames(idim))//" $i", intArgs=(/ globalDimSize/))
             call MPAS_io_def_dim(stream % fileHandle, trim(dimNames(idim)), globalDimSize, io_err)
             call MPAS_io_err_mesg(io_err, .false.)
             if (io_err /= MPAS_IO_NOERR) then
@@ -1931,7 +1938,7 @@ module mpas_io_streams
          ! Define time dimension if necessary
          !
          if (hasTimeDimension) then
-!call mpas_log_write('... defining Time dimension ')
+call mpas_log_write('... defining Time dimension ')
             call MPAS_io_def_dim(stream % fileHandle, 'Time', MPAS_IO_UNLIMITED_DIM, io_err)
             call MPAS_io_err_mesg(io_err, .false.)
             if (io_err /= MPAS_IO_NOERR) then
@@ -1946,7 +1953,7 @@ module mpas_io_streams
          !
          ! Define variable to low-level interface
          !
-!call mpas_log_write('... defining var to low-level interface with ndims $i', intArgs=(/ndims/))
+call mpas_log_write('... defining var to low-level interface with ndims $i', intArgs=(/ndims/))
 
          call MPAS_io_def_var(stream % fileHandle, trim(fieldName), fieldType, dimNamesLocal(1:ndims), precision=precision, ierr=io_err)
          call MPAS_io_err_mesg(io_err, .false.)
@@ -1957,7 +1964,7 @@ module mpas_io_streams
          end if
 
       else if (stream % ioDirection == MPAS_IO_READ) then
-!call mpas_log_write('... inquiring about')
+call mpas_log_write('... inquiring about')
 
          call MPAS_io_inq_var(stream % fileHandle, trim(fieldName), dimnames=dimNamesInq, dimsizes=dimSizesInq, ierr=io_err)
          ! If the field does not exist in the input file, we should handle this situation gracefully at higher levels
@@ -1971,9 +1978,9 @@ module mpas_io_streams
 
 ! Here, we should probably do a check to make sure the file agrees with what MPAS expects for the field
          do i=1,ndims
-!call mpas_log_write('Comparing '//trim(dimNames(i))//' '//trim(dimNamesInq(i)))
+call mpas_log_write('Comparing '//trim(dimNames(i))//' '//trim(dimNamesInq(i)))
             if (trim(dimNames(i)) /= trim(dimNamesInq(i))) then
-!call mpas_log_write('Mismatched dimension name in field')
+call mpas_log_write('Mismatched dimension name in field')
                if (present(ierr)) ierr = MPAS_IO_ERR
                deallocate(new_field_list_node)
                deallocate(dimNamesInq)
@@ -1989,9 +1996,9 @@ module mpas_io_streams
                   dimTemp = dimSizes(i)
                end if
             end if
-!call mpas_log_write('Comparing $i $i', intArgs=(/dimTemp, dimSizesInq(i)/))
+call mpas_log_write('Comparing $i $i', intArgs=(/dimTemp, dimSizesInq(i)/))
             if (dimTemp /= dimSizesInq(i)) then
-!call mpas_log_write('Mismatched dimension size in field')
+call mpas_log_write('Mismatched dimension size in field')
                if (present(ierr)) ierr = MPAS_IO_ERR
                deallocate(new_field_list_node)
                deallocate(dimNamesInq)
@@ -2033,10 +2040,10 @@ module mpas_io_streams
       ! Add field pointer to the list
       !
       if (.not. associated(stream % fieldList)) then
-!call mpas_log_write('Adding field to the head of the list')
+call mpas_log_write('Adding field to the head of the list')
          stream % fieldList => new_field_list_node
       else
-!call mpas_log_write('Adding field to the tail of the list')
+call mpas_log_write('Adding field to the tail of the list')
          field_list_cursor => stream % fieldList
          do while (associated(field_list_cursor % next))
             field_list_cursor => field_list_cursor % next
@@ -3480,7 +3487,7 @@ module mpas_io_streams
       real (kind=RKIND), dimension(:,:,:),     pointer :: real3d_temp, real3d_temp_small
       real (kind=RKIND), dimension(:,:,:,:),   pointer :: real4d_temp, real4d_temp_small
       real (kind=RKIND), dimension(:,:,:,:,:), pointer :: real5d_temp, real5d_temp_small
-
+call mpas_log_write("MPAS_writeStream")
       if (present(useMissingValMask)) then
          local_useMissingValMask = useMissingValMask
       else
@@ -3552,6 +3559,10 @@ module mpas_io_streams
 
          else if (field_cursor % field_type == FIELD_1D_INT) then
 
+call mpas_log_write('Writing out field '//trim(field_cursor % int1dField % outputFieldName))
+call mpas_log_write('   > is the field decomposed? $l', logicArgs=(/field_cursor % isDecomposed/))
+call mpas_log_write('   > outer dimension size $i', intArgs=(/field_cursor % totalDimSize/))
+
             if (field_cursor % int1dField % isVarArray) then
                ncons = size(field_cursor % int1dField % constituentNames)
             else
@@ -3576,8 +3587,10 @@ module mpas_io_streams
                                                      // trim(dimensionSuffix), ownedSize)
                      else
                         call mpas_pool_get_dimension(field_1dint_ptr % block % dimensions, field_1dint_ptr % dimNames(1), ownedSize)
-                     end if
 
+                     end if
+call mpas_log_write('   > Dimension: '//trim(field_1dint_ptr % dimNames(1))//' $i',intArgs=(/ownedSize/))
+call mpas_log_write('   > Done')
                      if (field_cursor % int1dField % isVarArray) then
 ! I suspect we will never hit this code, as it doesn't make sense, really
                         int0d_temp = field_1dint_ptr % array(j)

@@ -310,7 +310,9 @@
 			units="unitless"
 			description="The number of snow grain radius used in SNICAR model, radius are ranging from 30 to 150 microns with 1 micron interval"
 		/>
-
+		<dim name="nParticles" decomposition="uniform"
+			 description="The total number of particles in the simlulation."
+		/>
 	</dims>
 
 	<nml_record name="seaice_model" in_defaults="true">
@@ -2304,6 +2306,30 @@
 			<var name="xtime"/>
 			<stream name="abort_contents"/>
 		</stream>
+
+                <stream name="particles"
+                        type="input"
+                        filename_template="particles.nc"
+                        filename_interval="none"
+                        clobber_mode="replace_files"
+                        output_interval="none"
+                        input_interval="initial_only"
+			runtime_format="single_file">
+
+                    <var name="particleID"/>
+                </stream>
+
+                <stream name="particlesOut"
+                        type="output"
+                        filename_template="particlesOut.$Y-$M-$D_$h.$m.$s.nc"
+                        filename_interval="output_interval"
+                        clobber_mode="replace_files"
+                        output_interval="00-00-00_01:00:00"
+                        input_interval="none"
+			runtime_format="single_file">
+
+                    <var name="particleID"/>
+                </stream>
 
 	</streams>
 
@@ -5635,6 +5661,14 @@
 		     dimensions="nCells"
 		/>
 	</var_struct>
+
+        <!-- Particles -->
+        <var_struct name="particles" time_levs="1">
+            	<var name="particleID"
+		     type="integer"
+		     dimensions="nParticles"
+		/>
+        </var_struct> 
 
 #include "analysis_members/Registry_seaice_analysis_members.xml"
 </registry>
