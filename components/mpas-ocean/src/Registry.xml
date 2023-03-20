@@ -107,6 +107,9 @@
 			description="Number of wavenumbers used to reconstruct Stokes drift depth profile"
 			definition="6"
 		/>
+#ifdef SEAICE_COLUMN
+#include "seaice/Registry_seaice_column_dimensions.xml"
+#endif
 	</dims>
 
 	<!--*************************************-->
@@ -2174,6 +2177,22 @@
 			<var name="topographic_wave_drag"/>
 		</stream>
 
+#ifdef SEAICE_COLUMN
+                <stream name="seaice_forcing_data"
+				type="input"
+				filename_template="seaice_forcing_data.nc"
+				input_interval="initial_only"
+				runtime_format="single_file"
+				mode="forward">
+
+		        <var name="airTemperature"/>
+		        <var name="airSpecificHumidity"/>
+		        <var name="uAirVelocity"/>
+		        <var name="vAirVelocity"/>
+		        <var name="cloudFraction"/>
+		        <var name="rainfallRate"/>
+                </stream>
+#endif
 	</streams>
 
 	<var_struct name="state" time_levs="2">
@@ -3986,6 +4005,16 @@
 #include "analysis_members/Registry_analysis_members.xml"
 #ifndef EXCLUDE_INIT_MODE
 #include "mode_init/Registry.xml"
+#endif
+
+<!-- Sea ice column -->
+#ifdef SEAICE_COLUMN
+
+#include "seaice/Registry_seaice.xml"
+#include "seaice/Registry_seaice_state.xml"
+#include "seaice/Registry_seaice_column.xml"
+#include "seaice/Registry_seaice_forcing_and_coupling.xml"
+#include "seaice/analysis_members/Registry_seaice_analysis_members_in_ocean.xml"
 #endif
 
 </registry>

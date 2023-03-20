@@ -24,6 +24,7 @@ module seaice_mesh
 
   public :: &
        seaice_init_mesh, &
+       seaice_init_boundary, &
        seaice_cell_vertices_at_vertex, &
        seaice_normal_vectors, &
        seaice_normal_vectors_polygon, &
@@ -63,7 +64,7 @@ contains
     call coriolis_parameter(domain)
 
     ! boundary variables
-    call init_boundary(domain)
+    call seaice_init_boundary(domain)
 
   end subroutine seaice_init_mesh!}}}
 
@@ -359,7 +360,7 @@ contains
 
 !|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 !
-!  init_boundary
+!  seaice_init_boundary
 !
 !> \brief
 !> \author Adrian K. Turner, LANL
@@ -369,7 +370,7 @@ contains
 !
 !-----------------------------------------------------------------------
 
-  subroutine init_boundary(&
+  subroutine seaice_init_boundary(&
        domain)!{{{
 
     type (domain_type), intent(inout) :: &
@@ -406,7 +407,7 @@ contains
     call MPAS_dmpar_field_halo_exch(domain, 'interiorCell')
     call MPAS_dmpar_field_halo_exch(domain, 'interiorEdge')
 
-  end subroutine init_boundary!}}}
+  end subroutine seaice_init_boundary!}}}
 
 !|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 !

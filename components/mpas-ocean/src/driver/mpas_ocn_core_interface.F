@@ -100,6 +100,10 @@ module ocn_core_interface
    function ocn_setup_packages(configPool, packagePool, iocontext) result(ierr)!{{{
 
       use ocn_analysis_driver
+#ifdef SEAICE_COLUMN
+      use ocn_seaice_column, only: ocn_seaice_setup_packages
+      use seaice_analysis_driver, only: seaice_analysis_setup_packages
+#endif
 
       type (mpas_pool_type), intent(inout) :: configPool
       type (mpas_pool_type), intent(inout) :: packagePool
@@ -504,6 +508,11 @@ module ocn_core_interface
       ! test for conflicts, i.e. package settings that are inconsistent in combination
       !
 
+#ifdef SEAICE_COLUMN
+      call ocn_seaice_setup_packages(configPool, packagePool, err_tmp)
+      ierr = ior(ierr, err_tmp)
+      call seaice_analysis_setup_packages(configPool, packagePool, iocontext, ierr)
+#endif
 
 
       call mpas_log_write( '')

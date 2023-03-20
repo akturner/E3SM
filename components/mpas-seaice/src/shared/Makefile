@@ -26,7 +26,15 @@ OBJS = 	mpas_seaice_time_integration.o \
 	mpas_seaice_prescribed.o \
 	mpas_seaice_special_boundaries.o
 
+OBJS_OC =	mpas_seaice_constants.o \
+		mpas_seaice_mesh.o \
+		mpas_seaice_error.o \
+		mpas_seaice_forcing.o \
+		mpas_seaice_column.o
+
 all: $(OBJS)
+
+ocean_column: $(OBJS_OC)
 
 mpas_seaice_constants.o: 
 

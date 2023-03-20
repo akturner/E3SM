@@ -827,7 +827,7 @@ contains
          call MPAS_pool_get_subpool(blockPtr % structs, "ocean_fluxes", oceanFluxesPool)
          call MPAS_pool_get_subpool(blockPtr % structs, "atmos_fluxes", atmosFluxesPool)
          call MPAS_pool_get_subpool(blockPtr % structs, "atmos_coupling", atmosCouplingPool)
-         call MPAS_pool_get_subpool(blockPtr % structs, "diagnostics", diagnosticsPool)
+         call MPAS_pool_get_subpool(blockPtr % structs, "column_diagnostics", diagnosticsPool)
          call MPAS_pool_get_subpool(blockPtr % structs, "conservationCheckAM", conservationCheckAMPool)
 
          call MPAS_pool_get_array(meshPool, "areaCell", areaCell)
@@ -2185,7 +2185,7 @@ contains
       do while (associated(blockPtr))
 
          call MPAS_pool_get_subpool(blockPtr % structs, "mesh", meshPool)
-         call MPAS_pool_get_subpool(blockPtr % structs, "tracers", tracersPool)
+         call MPAS_pool_get_subpool(blockPtr % structs, "seaice_tracers", tracersPool)
          call MPAS_pool_get_subpool(blockPtr % structs, "conservationCheckAM", conservationCheckAMPool)
 
          call MPAS_pool_get_dimension(blockPtr % dimensions, 'nCellsSolve', nCellsSolve)
@@ -2328,7 +2328,7 @@ contains
          call MPAS_pool_get_config(blockPtr % configs, "config_use_topo_meltponds", config_use_topo_meltponds)
 
          call MPAS_pool_get_subpool(blockPtr % structs, "mesh", meshPool)
-         call MPAS_pool_get_subpool(blockPtr % structs, "tracers", tracersPool)
+         call MPAS_pool_get_subpool(blockPtr % structs, "seaice_tracers", tracersPool)
          call MPAS_pool_get_subpool(blockPtr % structs, "tracers_aggregate", tracersAggregatePool)
          call MPAS_pool_get_subpool(blockPtr % structs, "conservationCheckAM", conservationCheckAMPool)
 

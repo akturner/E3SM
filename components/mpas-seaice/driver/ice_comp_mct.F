@@ -1082,8 +1082,8 @@ contains
          call seq_infodata_GetData(infodata, nextsw_cday=dayOfNextShortwaveCalculation )
 
          ! perform post coupling operations
-         call post_atmospheric_coupling(block)
-         call post_oceanic_coupling(block)
+         call seaice_post_atmospheric_coupling(block)
+         call seaice_post_oceanic_coupling(block)
 
          block => block % next
       end do

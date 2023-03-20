@@ -27,6 +27,7 @@ module seaice_diagnostics
        seaice_initialize_time_diagnostics, &
        seaice_set_time_diagnostics, &
        seaice_check_state, &
+       seaice_diagnostic_tendencies, &
        seaice_set_testing_system_test_arrays, &
        seaice_load_balance_timers
 
@@ -245,7 +246,7 @@ contains
        do while (associated(block))
 
           call MPAS_pool_get_subpool(block % structs, "velocity_solver", velocitySolverPool)
-          call MPAS_pool_get_subpool(block % structs, "tracers", tracersPool)
+          call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracersPool)
 
           call MPAS_pool_get_array(tracersPool, "iceVolumeCategory", iceVolumeCategory, 1)
           call MPAS_pool_get_array(tracersPool, "snowVolumeCategory", snowVolumeCategory, 1)
@@ -305,7 +306,7 @@ contains
              call MPAS_pool_get_subpool(block % structs, "diagnostics", diagnosticsPool)
              call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)
              call MPAS_pool_get_subpool(block % structs, "velocity_solver", velocitySolverPool)
-             call MPAS_pool_get_subpool(block % structs, "tracers", tracersPool)
+             call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracersPool)
 
              call MPAS_pool_get_array(meshPool, "indexToCellID", indexToCellID)
              call MPAS_pool_get_array(meshPool, "indexToVertexID", indexToVertexID)
@@ -394,6 +395,114 @@ contains
 20  format(a,a,a,i9,a,e12.4,a,e12.4,a,e12.4,a,e12.4)
 
   end subroutine seaice_check_state
+
+!|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+!
+!  seaice_diagnostic_tendencies
+!
+!> \brief
+!> \author Adrian K. Turner, LANL
+!> \date 10th January 2023
+!> \details
+!>
+!
+!-----------------------------------------------------------------------
+
+  subroutine seaice_diagnostic_tendencies(domain, stateUpdateType, dt, iceAgeTimeOffset)
+
+    type(domain_type), intent(inout) :: domain
+
+    character(len=*), intent(in) :: &
+         stateUpdateType
+
+    real(kind=RKIND), intent(in) :: &
+         dt, &
+         iceAgeTimeOffset
+
+    type(block_type), pointer :: blockPtr
+
+    type(MPAS_pool_type), pointer :: &
+         tracers_aggregate, &
+         diagnostics
+
+    real(kind=RKIND), dimension(:), pointer :: &
+         iceAreaCell, &
+         iceVolumeCell, &
+         iceAgeCell, &
+         iceAreaTendency, &
+         iceVolumeTendency, &
+         iceAgeTendency
+
+    integer, pointer :: &
+         nCellsSolve
+
+    integer :: &
+         iCell
+
+    logical, pointer :: &
+         config_use_ice_age
+
+    ! get configs
+    call MPAS_pool_get_config(domain % blocklist % configs, "config_use_ice_age", config_use_ice_age)
+
+    ! compute thermodynamic area and volume tendencies
+    blockPtr => domain % blocklist
+    do while (associated(blockPtr))
+
+       call MPAS_pool_get_subpool(blockPtr % structs, "tracers_aggregate", tracers_aggregate)
+
+       call MPAS_pool_get_dimension(tracers_aggregate, "nCellsSolve", nCellsSolve)
+
+       call MPAS_pool_get_array(tracers_aggregate, "iceAreaCell", iceAreaCell)
+       call MPAS_pool_get_array(tracers_aggregate, "iceVolumeCell", iceVolumeCell)
+       call MPAS_pool_get_array(tracers_aggregate, "iceAgeCell", iceAgeCell)
+
+       if (trim(stateUpdateType) == "transport") then
+
+          call MPAS_pool_get_subpool(blockPtr % structs, "advection_diagnostics", diagnostics)
+          call MPAS_pool_get_array(diagnostics, "iceAreaTendencyTransport", iceAreaTendency)
+          call MPAS_pool_get_array(diagnostics, "iceVolumeTendencyTransport", iceVolumeTendency)
+          call MPAS_pool_get_array(diagnostics, "iceAgeTendencyTransport", iceAgeTendency)
+
+       else if (trim(stateUpdateType) == "thermodynamics") then
+
+          call MPAS_pool_get_subpool(blockPtr % structs, "column_diagnostics", diagnostics)
+          call MPAS_pool_get_array(diagnostics, "iceAreaTendencyThermodynamics", iceAreaTendency)
+          call MPAS_pool_get_array(diagnostics, "iceVolumeTendencyThermodynamics", iceVolumeTendency)
+          call MPAS_pool_get_array(diagnostics, "iceAgeTendencyThermodynamics", iceAgeTendency)
+
+       else
+
+          call mpas_log_write("seaice_column_update_state: Unknown update type: "//trim(stateUpdateType), messageType=MPAS_LOG_CRIT)
+
+       endif
+
+       do iCell = 1, nCellsSolve
+
+          iceAreaTendency(iCell)   = (iceAreaCell(iCell)   - iceAreaTendency(iCell))   / dt
+          iceVolumeTendency(iCell) = (iceVolumeCell(iCell) - iceVolumeTendency(iCell)) / dt
+
+          if (config_use_ice_age) then
+             if (iceAgeTimeOffset > 0.0_RKIND) then
+
+                if (iceAgeCell(iCell) > 0.0_RKIND) &
+                     iceAgeTendency(iCell) = &
+                          (iceAgeCell(iCell) - iceAgeTendency(iCell) - iceAgeTimeOffset) / dt
+
+             else
+
+                iceAgeTendency(iCell) = &
+                     (iceAgeCell(iCell) - iceAgeTendency(iCell)) / dt
+
+             endif
+          endif
+
+       enddo ! iCell
+
+       blockPtr => blockPtr % next
+    enddo
+
+  end subroutine seaice_diagnostic_tendencies
 
 !|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 !

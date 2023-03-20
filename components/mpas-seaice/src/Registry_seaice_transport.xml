@@ -1,3 +1,25 @@
+	<nml_record name="advection" in_defaults="true">
+		<nml_option name="config_advection_type" type="character" default_value="incremental_remap" units="unitless"
+			description="Type of advection scheme (upwind or incremental remapping)."
+			possible_values="'upwind' and 'incremental_remap'"
+		/>
+		<nml_option name="config_monotonic" type="logical" default_value="true" units="unitless"
+			description="If true then fluxes are limited to produce a monotonic advection scheme."
+			possible_values="true and false"
+		/>
+		<nml_option name="config_conservation_check" type="logical" default_value="false" units="unitless"
+			description="If true test the advection results for tracer conservation (incremental remap only)."
+			possible_values="true or false"
+		/>
+		<nml_option name="config_monotonicity_check" type="logical" default_value="false" units="unitless"
+			description="If true test the advection results for monotonicity (incremental remap only)."
+			possible_values="true or false"
+		/>
+		<nml_option name="config_recover_tracer_means_check" type="logical" default_value="false" units="unitless"
+			description="If true compare mass*tracer products for incremental remapping with analytical values."
+			possible_values="true or false"
+		/>
+	</nml_record>
 
 	<var_struct name="tracer_masks" time_levs="1">
 		<var name="iceAreaCategoryMask"		type="integer"	dimensions="ONE nCategories nCells"			name_in_code="iceAreaCategoryMask"/>
@@ -898,3 +920,53 @@
 		<var name="maskCategoryCell"			type="integer"	dimensions="nCategories nCells"			name_in_code="maskCategoryCell"/>
 		<var name="workCategoryCell"			type="real"	dimensions="nCategories nCells"			name_in_code="workCategoryCell"/>
 	</var_struct>
+
+	<!-- upwind transport -->
+	<var_struct name="tracer_tendencies" time_levs="1">
+		<var name="iceAreaCategoryTend"
+		     type="real"
+		     dimensions="ONE nCategories nCells"
+		/>
+		<var name="iceVolumeCategoryTend"
+		     type="real"
+		     dimensions="ONE nCategories nCells"
+		/>
+		<var name="snowVolumeCategoryTend"
+		     type="real"
+		     dimensions="ONE nCategories nCells"
+		/>
+		<var name="surfaceTemperatureTend"
+		     type="real"
+		     dimensions="ONE nCategories nCells"
+		/>
+		<var name="iceEnthalpyTend"
+		     type="real"
+		     dimensions="nIceLayers nCategories nCells"
+		/>
+		<var name="iceSalinityTend"
+		     type="real"
+		     dimensions="nIceLayers nCategories nCells"
+		/>
+		<var name="snowEnthalpyTend"
+		     type="real"
+		     dimensions="nSnowLayers nCategories nCells"
+		/>
+	</var_struct>
+
+	<!-- Diagnostics -->
+	<var_struct name="advection_diagnostics" time_levs="1">
+		<var name="iceAreaTendencyTransport"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="s-1"
+		/>
+		<var name="iceVolumeTendencyTransport"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="m s-1"
+		/>
+		<var name="iceAgeTendencyTransport"
+		     type="real"
+		     dimensions="nCells Time"
+		/>
+        </var_struct>

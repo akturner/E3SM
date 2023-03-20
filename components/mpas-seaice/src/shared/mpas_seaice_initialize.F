@@ -29,7 +29,8 @@ module seaice_initialize
 
   public :: &
        seaice_init, &
-       seaice_init_post_clock_advance
+       seaice_init_post_clock_advance, &
+       seaice_initialize_coupler_fields
 
 contains
 
@@ -109,7 +110,7 @@ contains
 
     ! init coupler fluxes
     call mpas_log_write(" Initialize coupler fields...")
-    call initialize_coupler_fields(domain)
+    call seaice_initialize_coupler_fields(domain)
 
     ! initialize forcing
     call mpas_log_write(" Initialize forcing...")
@@ -127,7 +128,7 @@ contains
 
     ! column physics initialization
     call mpas_log_write(" Initialize column variables...")
-    call seaice_init_column_physics_package_variables(domain, clock)
+    call seaice_init_column_physics_package_variables(domain, clock, dt)
 
     ! init ice state
     call mpas_log_write(" Initialize ice state...")
@@ -176,12 +177,16 @@ contains
          config_use_column_shortwave, &
          config_do_restart
 
+    real(kind=RKIND), pointer :: &
+         config_dt
+
     call MPAS_pool_get_config(domain % configs, "config_use_column_package", config_use_column_package)
     call MPAS_pool_get_config(domain % configs, "config_use_column_shortwave", config_use_column_shortwave)
     call MPAS_pool_get_config(domain % configs, "config_do_restart", config_do_restart)
+    call MPAS_pool_get_config(domain % configs, "config_dt", config_dt)
 
     if (config_use_column_package .and. config_use_column_shortwave .and. .not. config_do_restart) &
-         call seaice_init_column_shortwave(domain, clock)
+         call seaice_init_column_shortwave(domain, clock, config_dt)
 
   end subroutine seaice_init_post_clock_advance
 
@@ -510,7 +515,7 @@ contains
     call MPAS_pool_get_config(configs, "config_initial_latitude_south", config_initial_latitude_south)
 
     call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
-    call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+    call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
     call MPAS_pool_get_subpool(block % structs, "tracers_aggregate", tracers_aggregate)
 
     call MPAS_pool_get_dimension(mesh, "nCells", nCellsSolve)
@@ -643,7 +648,7 @@ contains
     call MPAS_pool_get_config(configs, "config_initial_latitude_south", config_initial_latitude_south)
 
     call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
-    call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+    call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
     call MPAS_pool_get_subpool(block % structs, "ocean_coupling", ocean_coupling)
     call MPAS_pool_get_subpool(block % structs, "atmos_coupling", atmos_coupling)
     call MPAS_pool_get_subpool(block % structs, "initial", initial)
@@ -667,7 +672,7 @@ contains
 
     call MPAS_pool_get_array(ocean_coupling, "seaSurfaceTemperature", seaSurfaceTemperature)
     call MPAS_pool_get_array(ocean_coupling, "seaFreezingTemperature", seaFreezingTemperature)
-    call MPAS_pool_get_array(ocean_coupling, "landIceMask", landIceMask)
+    call MPAS_pool_get_array(ocean_coupling, "landIceMaskSeaice", landIceMask)
 
     call MPAS_pool_get_array(initial, "initialSalinityProfile", initialSalinityProfile)
     call MPAS_pool_get_array(initial, "initialMeltingTemperatureProfile", initialMeltingTemperatureProfile)
@@ -965,7 +970,7 @@ contains
     call MPAS_pool_get_config(configs, "config_initial_latitude_south", config_initial_latitude_south)
 
     call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
-    call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+    call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
     call MPAS_pool_get_subpool(block % structs, "ocean_coupling", ocean_coupling)
     call MPAS_pool_get_subpool(block % structs, "atmos_coupling", atmos_coupling)
     call MPAS_pool_get_subpool(block % structs, "initial", initial)
@@ -989,7 +994,7 @@ contains
 
     call MPAS_pool_get_array(ocean_coupling, "seaSurfaceTemperature", seaSurfaceTemperature)
     call MPAS_pool_get_array(ocean_coupling, "seaFreezingTemperature", seaFreezingTemperature)
-    call MPAS_pool_get_array(ocean_coupling, "landIceMask", landIceMask)
+    call MPAS_pool_get_array(ocean_coupling, "landIceMaskSeaice", landIceMask)
 
     call MPAS_pool_get_array(initial, "categoryThicknessLimits", categoryThicknessLimits)
     call MPAS_pool_get_array(initial, "initialSalinityProfile", initialSalinityProfile)
@@ -1138,7 +1143,7 @@ contains
     call MPAS_pool_get_config(configs, "config_initial_latitude_south", config_initial_latitude_south)
 
     call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
-    call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+    call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
     call MPAS_pool_get_subpool(block % structs, "boundary", boundary)
 
     call MPAS_pool_get_dimension(mesh, "nCells", nCells)
@@ -1238,7 +1243,7 @@ contains
     call MPAS_pool_get_config(configs, 'config_rotate_cartesian_grid', config_rotate_cartesian_grid)
 
     call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
-    call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+    call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
 
     call MPAS_pool_get_dimension(mesh, "nCells", nCells)
 
@@ -1376,7 +1381,7 @@ contains
     call MPAS_pool_get_config(configs, "config_initial_latitude_south", config_initial_latitude_south)
 
     call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
-    call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+    call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
 
     call MPAS_pool_get_dimension(mesh, "nCells", nCells)
 
@@ -1488,7 +1493,7 @@ contains
     call MPAS_pool_get_config(configs, "config_initial_latitude_south", config_initial_latitude_south)
 
     call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
-    call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+    call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
 
     call MPAS_pool_get_dimension(mesh, "nCells", nCells)
 
@@ -1586,7 +1591,7 @@ contains
     call MPAS_pool_get_array(velocity_solver, "uVelocity", uVelocity)
     call MPAS_pool_get_array(velocity_solver, "vVelocity", vVelocity)
 
-    call MPAS_pool_get_array(ocean_coupling, "landIceMaskVertex", landIceMaskVertex)
+    call MPAS_pool_get_array(ocean_coupling, "landIceMaskSeaiceVertex", landIceMaskVertex)
 
     call MPAS_pool_get_array(boundary, "interiorVertex", interiorVertex)
 
@@ -1672,7 +1677,7 @@ contains
 
     call MPAS_pool_get_array(ocean_coupling, "uOceanVelocity", uOceanVelocity)
     call MPAS_pool_get_array(ocean_coupling, "vOceanVelocity", vOceanVelocity)
-    call MPAS_pool_get_array(ocean_coupling, "landIceMaskVertex", landIceMaskVertex)
+    call MPAS_pool_get_array(ocean_coupling, "landIceMaskSeaiceVertex", landIceMaskVertex)
 
     call MPAS_pool_get_array(boundary, "interiorVertex", interiorVertex)
 
@@ -1927,7 +1932,7 @@ contains
 
 !|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 !
-! initialize_coupler_fields
+! seaice_initialize_coupler_fields
 !
 !> \brief
 !> \author Adrian K. Turner, LANL
@@ -1937,7 +1942,7 @@ contains
 !
 !-----------------------------------------------------------------------
 
-  subroutine initialize_coupler_fields(domain)
+  subroutine seaice_initialize_coupler_fields(domain)
 
     use ice_colpkg, only: &
          colpkg_liquidus_temperature, &
@@ -2174,7 +2179,7 @@ contains
        block => block % next
     enddo
 
-  end subroutine initialize_coupler_fields
+  end subroutine seaice_initialize_coupler_fields
 
 !|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 !
@@ -2236,7 +2241,7 @@ contains
           call MPAS_pool_get_subpool(block % structs, "ocean_coupling", oceanCouplingPool)
           call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)
 
-          call MPAS_pool_get_array(oceanCouplingPool, "landIceMask", landIceMask)
+          call MPAS_pool_get_array(oceanCouplingPool, "landIceMaskSeaice", landIceMask)
 
           call MPAS_pool_get_array(meshPool, "latCell", latCell)
           call MPAS_pool_get_array(meshPool, "lonCell", lonCell)

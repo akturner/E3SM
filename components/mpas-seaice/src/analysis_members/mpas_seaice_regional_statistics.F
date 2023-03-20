@@ -246,9 +246,9 @@ contains
      block => domain % blocklist
      do while (associated(block))
 
-        call MPAS_pool_get_subpool(block % structs, "regions", regionsPool)
+        call MPAS_pool_get_subpool(block % structs, "regionsSeaice", regionsPool)
 
-        call MPAS_pool_get_array(regionsPool, "regionCellMasks", regionCellMasks)
+        call MPAS_pool_get_array(regionsPool, "regionCellMasksSeaice", regionCellMasks)
 
         call MPAS_pool_get_dimension(block % dimensions, "nCellsSolve", nCellsSolve)
 
@@ -317,11 +317,11 @@ contains
      block => domain % blocklist
      do while (associated(block))
 
-        call MPAS_pool_get_subpool(block % structs, "regions", regionsPool)
+        call MPAS_pool_get_subpool(block % structs, "regionsSeaice", regionsPool)
         call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)
 
-        call MPAS_pool_get_array(regionsPool, "regionCellMasks", regionCellMasks)
-        call MPAS_pool_get_array(regionsPool, "regionNames", regionNames)
+        call MPAS_pool_get_array(regionsPool, "regionCellMasksSeaice", regionCellMasks)
+        call MPAS_pool_get_array(regionsPool, "regionNamesSeaice", regionNames)
 
         call MPAS_pool_get_array(meshPool, "latCell", latCell)
 
@@ -400,16 +400,16 @@ contains
      block => domain % blocklist
      do while (associated(block))
 
-        call MPAS_pool_get_subpool(block % structs, "regions", regionsPool)
+        call MPAS_pool_get_subpool(block % structs, "regionsSeaice", regionsPool)
         call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)
 
-        call MPAS_pool_get_array(regionsPool, "regionCellMasks", regionCellMasks)
-        call MPAS_pool_get_array(regionsPool, "regionVertexMasks", regionVertexMasks)
+        call MPAS_pool_get_array(regionsPool, "regionCellMasksSeaice", regionCellMasks)
+        call MPAS_pool_get_array(regionsPool, "regionVertexMasksSeaice", regionVertexMasks)
 
         call MPAS_pool_get_array(meshPool, "cellsOnVertex", cellsOnVertex)
 
         call MPAS_pool_get_dimension(block % dimensions, "nVerticesSolve", nVerticesSolve)
-        call MPAS_pool_get_dimension(block % dimensions, "nRegions", nRegions)
+        call MPAS_pool_get_dimension(block % dimensions, "nRegionsSeaice", nRegions)
         call MPAS_pool_get_dimension(block % dimensions, "vertexDegree", vertexDegree)
 
         do iVertex = 1, nVerticesSolve
@@ -494,7 +494,7 @@ contains
     blockLoop: do while (associated(block))
 
        ! get the region number
-       call MPAS_pool_get_dimension(block % dimensions, "nRegions", nRegions)
+       call MPAS_pool_get_dimension(block % dimensions, "nRegionsSeaice", nRegions)
 
        ! create a new pool for derived fields
        call MPAS_pool_create_pool(derivedFieldPool)
@@ -749,10 +749,11 @@ contains
     outputField % array = 0.0_RKIND
 
     ! fieldname
-    outputField % fieldName = trim(fieldName)
+    outputField % fieldName       = trim(fieldName)
+    outputField % outputFieldName = trim(fieldName)
 
     ! I/O layer
-    outputField % dimNames(1)      = "nRegions"
+    outputField % dimNames(1)      = "nRegionsSeaice"
     outputField % dimSizes(1)      = nRegions
     outputField % defaultValue     = 0.0_RKIND
     outputField % isDecomposed     = .false.
@@ -811,12 +812,13 @@ contains
     outputField % array = 0.0_RKIND
 
     ! fieldname
-    outputField % fieldName = trim(fieldName)
+    outputField % fieldName       = trim(fieldName)
+    outputField % outputFieldName = trim(fieldName)
 
     ! I/O layer
     outputField % dimNames(1)      = inputField % dimNames(1)
     outputField % dimSizes(1)      = inputField % dimSizes(1)
-    outputField % dimNames(2)      = "nRegions"
+    outputField % dimNames(2)      = "nRegionsSeaice"
     outputField % dimSizes(2)      = nRegions
     outputField % defaultValue     = 0.0_RKIND
     outputField % isDecomposed     = .false.
@@ -1051,7 +1053,7 @@ contains
 
       dminfo = domain % dminfo
 
-      call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegions", nRegions)
+      call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegionsSeaice", nRegions)
 
       allocate(globalSumsIn(nRegions*nSums))
       allocate(globalMaxsIn(nRegions*nMaxs))
@@ -1064,7 +1066,7 @@ contains
          call MPAS_pool_get_config(block % configs, "config_AM_regionalStatistics_ice_extent_limit", iceExtentLimit)
 
          call MPAS_pool_get_subpool(block % structs, 'mesh', meshPool)
-         call MPAS_pool_get_subpool(block % structs, 'regions', regionsPool)
+         call MPAS_pool_get_subpool(block % structs, 'regionsSeaice', regionsPool)
          call MPAS_pool_get_subpool(block % structs, 'tracers_aggregate', tracersAggregatePool)
          call MPAS_pool_get_subpool(block % structs, 'shortwave', shortwavePool)
          call MPAS_pool_get_subpool(block % structs, 'velocity_solver', velocitySolverPool)
@@ -1093,8 +1095,8 @@ contains
          call MPAS_pool_get_array(velocitySolverPool, "vVelocityCell", vVelocityCell)
          call MPAS_pool_get_array(velocitySolverPool, "dynamicallyLockedCellsMask", dynamicallyLockedCellsMask)
 
-         call MPAS_pool_get_array(regionsPool, 'regionCellMasks', regionCellMasks)
-         call MPAS_pool_get_array(regionsPool, 'regionVertexMasks', regionVertexMasks)
+         call MPAS_pool_get_array(regionsPool, 'regionCellMasksSeaice', regionCellMasks)
+         call MPAS_pool_get_array(regionsPool, 'regionVertexMasksSeaice', regionVertexMasks)
 
          ! cell centre velocity for velocity statistics
          call seaice_interpolate_vertex_to_cell(meshPool, boundaryPool, uVelocityCell, uVelocity)
@@ -1391,7 +1393,7 @@ contains
          iRegion
 
     ! get the number of regions
-    call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegions", nRegions)
+    call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegionsSeaice", nRegions)
 
     ! get the output array
     call MPAS_pool_get_subpool(domain % blocklist % structs, "regionalStatisticsAM_derivedFieldsPool", derivedFieldPool)
@@ -1416,12 +1418,12 @@ contains
        ! get other needed pools
        call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)
        call MPAS_pool_get_subpool(block % structs, "tracers_aggregate", tracersAggregatePool)
-       call MPAS_pool_get_subpool(block % structs, "regions", regionsPool)
+       call MPAS_pool_get_subpool(block % structs, "regionsSeaice", regionsPool)
 
        ! get other needed arrays
        call MPAS_pool_get_array(meshPool, "areaCell", areaCell)
        call MPAS_pool_get_array(tracersAggregatePool, "iceAreaCell", iceAreaCell)
-       call MPAS_pool_get_array(regionsPool, "regionCellMasks", regionCellMasks)
+       call MPAS_pool_get_array(regionsPool, "regionCellMasksSeaice", regionCellMasks)
 
        ! get the needed dimensions
        call MPAS_pool_get_dimension(block % dimensions, "nCellsSolve", nCellsSolve)
@@ -1511,7 +1513,7 @@ contains
          iRegion
 
     ! get the number of regions
-    call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegions", nRegions)
+    call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegionsSeaice", nRegions)
 
     ! get the output array
     call MPAS_pool_get_subpool(domain % blocklist % structs, "regionalStatisticsAM_derivedFieldsPool", derivedFieldPool)
@@ -1532,12 +1534,12 @@ contains
        ! get other needed pools
        call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)
        call MPAS_pool_get_subpool(block % structs, "tracers_aggregate", tracersAggregatePool)
-       call MPAS_pool_get_subpool(block % structs, "regions", regionsPool)
+       call MPAS_pool_get_subpool(block % structs, "regionsSeaice", regionsPool)
 
        ! get other needed arrays
        call MPAS_pool_get_array(meshPool, "areaCell", areaCell)
        call MPAS_pool_get_array(tracersAggregatePool, "iceAreaCell", iceAreaCell)
-       call MPAS_pool_get_array(regionsPool, "regionCellMasks", regionCellMasks)
+       call MPAS_pool_get_array(regionsPool, "regionCellMasksSeaice", regionCellMasks)
 
        ! get the needed dimensions
        call MPAS_pool_get_dimension(block % dimensions, "nCellsSolve", nCellsSolve)
@@ -1627,7 +1629,7 @@ contains
          iRegion
 
     ! get the number of regions
-    call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegions", nRegions)
+    call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegionsSeaice", nRegions)
 
     ! get the output array
     call MPAS_pool_get_subpool(domain % blocklist % structs, "regionalStatisticsAM_derivedFieldsPool", derivedFieldPool)
@@ -1651,11 +1653,11 @@ contains
 
        ! get other needed pools
        call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)
-       call MPAS_pool_get_subpool(block % structs, "regions", regionsPool)
+       call MPAS_pool_get_subpool(block % structs, "regionsSeaice", regionsPool)
 
        ! get other needed arrays
        call MPAS_pool_get_array(meshPool, "areaCell", areaCell)
-       call MPAS_pool_get_array(regionsPool, "regionCellMasks", regionCellMasks)
+       call MPAS_pool_get_array(regionsPool, "regionCellMasksSeaice", regionCellMasks)
 
        ! get the needed dimensions
        call MPAS_pool_get_dimension(block % dimensions, "nCellsSolve", nCellsSolve)
@@ -1741,7 +1743,7 @@ contains
          iRegion
 
     ! get the number of regions
-    call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegions", nRegions)
+    call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegionsSeaice", nRegions)
 
     ! get the output array
     call MPAS_pool_get_subpool(domain % blocklist % structs, "regionalStatisticsAM_derivedFieldsPool", derivedFieldPool)
@@ -1761,11 +1763,11 @@ contains
 
        ! get other needed pools
        call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)
-       call MPAS_pool_get_subpool(block % structs, "regions", regionsPool)
+       call MPAS_pool_get_subpool(block % structs, "regionsSeaice", regionsPool)
 
        ! get other needed arrays
        call MPAS_pool_get_array(meshPool, "areaCell", areaCell)
-       call MPAS_pool_get_array(regionsPool, "regionCellMasks", regionCellMasks)
+       call MPAS_pool_get_array(regionsPool, "regionCellMasksSeaice", regionCellMasks)
 
        ! get the needed dimensions
        call MPAS_pool_get_dimension(block % dimensions, "nCellsSolve", nCellsSolve)
@@ -1861,7 +1863,7 @@ contains
          iRegion
 
     ! get the number of regions
-    call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegions", nRegions)
+    call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegionsSeaice", nRegions)
 
     ! get the output array
     call MPAS_pool_get_subpool(domain % blocklist % structs, "regionalStatisticsAM_derivedFieldsPool", derivedFieldPool)
@@ -1892,12 +1894,12 @@ contains
        ! get other needed pools
        call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)
        call MPAS_pool_get_subpool(block % structs, "tracers_aggregate", tracersAggregatePool)
-       call MPAS_pool_get_subpool(block % structs, "regions", regionsPool)
+       call MPAS_pool_get_subpool(block % structs, "regionsSeaice", regionsPool)
 
        ! get other needed arrays
        call MPAS_pool_get_array(meshPool, "areaCell", areaCell)
        call MPAS_pool_get_array(tracersAggregatePool, "iceAreaCell", iceAreaCell)
-       call MPAS_pool_get_array(regionsPool, "regionCellMasks", regionCellMasks)
+       call MPAS_pool_get_array(regionsPool, "regionCellMasksSeaice", regionCellMasks)
 
        ! get the needed dimensions
        call MPAS_pool_get_dimension(block % dimensions, "nCellsSolve", nCellsSolve)
@@ -2011,7 +2013,7 @@ contains
          iRegion
 
     ! get the number of regions
-    call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegions", nRegions)
+    call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegionsSeaice", nRegions)
 
     ! get the output array
     call MPAS_pool_get_subpool(domain % blocklist % structs, "regionalStatisticsAM_derivedFieldsPool", derivedFieldPool)
@@ -2038,12 +2040,12 @@ contains
        ! get other needed pools
        call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)
        call MPAS_pool_get_subpool(block % structs, "tracers_aggregate", tracersAggregatePool)
-       call MPAS_pool_get_subpool(block % structs, "regions", regionsPool)
+       call MPAS_pool_get_subpool(block % structs, "regionsSeaice", regionsPool)
 
        ! get other needed arrays
        call MPAS_pool_get_array(meshPool, "areaCell", areaCell)
        call MPAS_pool_get_array(tracersAggregatePool, "iceAreaCell", iceAreaCell)
-       call MPAS_pool_get_array(regionsPool, "regionCellMasks", regionCellMasks)
+       call MPAS_pool_get_array(regionsPool, "regionCellMasksSeaice", regionCellMasks)
 
        ! get the needed dimensions
        call MPAS_pool_get_dimension(block % dimensions, "nCellsSolve", nCellsSolve)
@@ -2157,7 +2159,7 @@ contains
          iRegion
 
     ! get the number of regions
-    call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegions", nRegions)
+    call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegionsSeaice", nRegions)
 
     ! get the output array
     call MPAS_pool_get_subpool(domain % blocklist % structs, "regionalStatisticsAM_derivedFieldsPool", derivedFieldPool)
@@ -2187,11 +2189,11 @@ contains
 
        ! get other needed pools
        call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)
-       call MPAS_pool_get_subpool(block % structs, "regions", regionsPool)
+       call MPAS_pool_get_subpool(block % structs, "regionsSeaice", regionsPool)
 
        ! get other needed arrays
        call MPAS_pool_get_array(meshPool, "areaCell", areaCell)
-       call MPAS_pool_get_array(regionsPool, "regionCellMasks", regionCellMasks)
+       call MPAS_pool_get_array(regionsPool, "regionCellMasksSeaice", regionCellMasks)
 
        ! get the needed dimensions
        call MPAS_pool_get_dimension(block % dimensions, "nCellsSolve", nCellsSolve)
@@ -2300,7 +2302,7 @@ contains
          iRegion
 
     ! get the number of regions
-    call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegions", nRegions)
+    call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegionsSeaice", nRegions)
 
     ! get the output array
     call MPAS_pool_get_subpool(domain % blocklist % structs, "regionalStatisticsAM_derivedFieldsPool", derivedFieldPool)
@@ -2326,11 +2328,11 @@ contains
 
        ! get other needed pools
        call MPAS_pool_get_subpool(block % structs, "mesh", meshPool)
-       call MPAS_pool_get_subpool(block % structs, "regions", regionsPool)
+       call MPAS_pool_get_subpool(block % structs, "regionsSeaice", regionsPool)
 
        ! get other needed arrays
        call MPAS_pool_get_array(meshPool, "areaCell", areaCell)
-       call MPAS_pool_get_array(regionsPool, "regionCellMasks", regionCellMasks)
+       call MPAS_pool_get_array(regionsPool, "regionCellMasksSeaice", regionCellMasks)
 
        ! get the needed dimensions
        call MPAS_pool_get_dimension(block % dimensions, "nCellsSolve", nCellsSolve)
@@ -2436,7 +2438,7 @@ contains
          iRegion
 
     ! get the number of regions
-    call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegions", nRegions)
+    call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegionsSeaice", nRegions)
 
     ! get the output array
     call MPAS_pool_get_subpool(domain % blocklist % structs, "regionalStatisticsAM_derivedFieldsPool", derivedFieldPool)
@@ -2459,10 +2461,10 @@ contains
        call MPAS_pool_get_array(derivedFieldPool, trim(outputFieldName), outputFieldArray)
 
        ! get other needed pools
-       call MPAS_pool_get_subpool(block % structs, "regions", regionsPool)
+       call MPAS_pool_get_subpool(block % structs, "regionsSeaice", regionsPool)
 
        ! get other needed arrays
-       call MPAS_pool_get_array(regionsPool, "regionCellMasks", regionCellMasks)
+       call MPAS_pool_get_array(regionsPool, "regionCellMasksSeaice", regionCellMasks)
 
        ! get the needed dimensions
        call MPAS_pool_get_dimension(block % dimensions, "nCellsSolve", nCellsSolve)
@@ -2542,7 +2544,7 @@ contains
          iRegion
 
     ! get the number of regions
-    call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegions", nRegions)
+    call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegionsSeaice", nRegions)
 
     ! get the output array
     call MPAS_pool_get_subpool(domain % blocklist % structs, "regionalStatisticsAM_derivedFieldsPool", derivedFieldPool)
@@ -2561,10 +2563,10 @@ contains
        call MPAS_pool_get_array(block % allFields, trim(inputFieldName), inputFieldArray)
 
        ! get other needed pools
-       call MPAS_pool_get_subpool(block % structs, "regions", regionsPool)
+       call MPAS_pool_get_subpool(block % structs, "regionsSeaice", regionsPool)
 
        ! get other needed arrays
-       call MPAS_pool_get_array(regionsPool, "regionCellMasks", regionCellMasks)
+       call MPAS_pool_get_array(regionsPool, "regionCellMasksSeaice", regionCellMasks)
 
        ! get the needed dimensions
        call MPAS_pool_get_dimension(block % dimensions, "nCellsSolve", nCellsSolve)
@@ -2649,7 +2651,7 @@ contains
          iRegion
 
     ! get the number of regions
-    call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegions", nRegions)
+    call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegionsSeaice", nRegions)
 
     ! get the output array
     call MPAS_pool_get_subpool(domain % blocklist % structs, "regionalStatisticsAM_derivedFieldsPool", derivedFieldPool)
@@ -2672,10 +2674,10 @@ contains
        call MPAS_pool_get_array(derivedFieldPool, trim(outputFieldName), outputFieldArray)
 
        ! get other needed pools
-       call MPAS_pool_get_subpool(block % structs, "regions", regionsPool)
+       call MPAS_pool_get_subpool(block % structs, "regionsSeaice", regionsPool)
 
        ! get other needed arrays
-       call MPAS_pool_get_array(regionsPool, "regionCellMasks", regionCellMasks)
+       call MPAS_pool_get_array(regionsPool, "regionCellMasksSeaice", regionCellMasks)
 
        ! get the needed dimensions
        call MPAS_pool_get_dimension(block % dimensions, "nCellsSolve", nCellsSolve)
@@ -2755,7 +2757,7 @@ contains
          iRegion
 
     ! get the number of regions
-    call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegions", nRegions)
+    call MPAS_pool_get_dimension(domain % blocklist % dimensions, "nRegionsSeaice", nRegions)
 
     ! get the output array
     call MPAS_pool_get_subpool(domain % blocklist % structs, "regionalStatisticsAM_derivedFieldsPool", derivedFieldPool)
@@ -2774,10 +2776,10 @@ contains
        call MPAS_pool_get_array(block % allFields, trim(inputFieldName), inputFieldArray)
 
        ! get other needed pools
-       call MPAS_pool_get_subpool(block % structs, "regions", regionsPool)
+       call MPAS_pool_get_subpool(block % structs, "regionsSeaice", regionsPool)
 
        ! get other needed arrays
-       call MPAS_pool_get_array(regionsPool, "regionCellMasks", regionCellMasks)
+       call MPAS_pool_get_array(regionsPool, "regionCellMasksSeaice", regionCellMasks)
 
        ! get the needed dimensions
        call MPAS_pool_get_dimension(block % dimensions, "nCellsSolve", nCellsSolve)

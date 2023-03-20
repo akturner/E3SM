@@ -220,7 +220,7 @@ contains
        do while (associated(blockPtr))
 
           call mpas_pool_get_subpool(blockPtr % structs, "prescribed_ice", prescribedIcePool)
-          call mpas_pool_get_subpool(blockPtr % structs, "tracers", tracersPool)
+          call mpas_pool_get_subpool(blockPtr % structs, "seaice_tracers", tracersPool)
           call mpas_pool_get_subpool(blockPtr % structs, "initial", initialPool)
           call mpas_pool_get_subpool(blockPtr % structs, "ocean_coupling", oceanCouplingPool)
           call mpas_pool_get_subpool(blockPtr % structs, "mesh", meshPool)

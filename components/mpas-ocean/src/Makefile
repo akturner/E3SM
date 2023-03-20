@@ -10,7 +10,7 @@ OCEAN_SHARED_INCLUDES = -I$(FRAMEWORK_DIR)/framework -I$(FRAMEWORK_DIR)/external
 OCEAN_SHARED_INCLUDES += -I$(PWD)/shared -I$(PWD)/analysis_members -I$(PWD)/mode_forward -I$(PWD)/mode_analysis
 OCEAN_SHARED_INCLUDES += -I$(PWD)/BGC -I$(PWD)/MARBL/include -I$(PWD)/cvmix/src/shared -I$(PWD)/gotm/build -I$(PWD)/gotm/build/modules -I$(PWD)/SHTNS -I$(PWD)/ppr/src
 ifeq "$(SEAICE_COLUMN)" "true"
-	OCEAN_SHARED_INCLUDES += -I$(PWD)/seaice_driver -I$(PWD)/seaice_column
+	OCEAN_SHARED_INCLUDES += -I$(PWD)/seaice -I$(PWD)/seaice/column -I$(PWD)/seaice/shared -I$(PWD)/seaice/analysis_members
 endif
 ifneq "$(EXCLUDE_INIT_MODE)" "true"
 	OCEAN_SHARED_INCLUDES += -I$(PWD)/mode_init
@@ -35,7 +35,7 @@ all: shared libcvmix analysis_members libBGC libMARBL libgotm libfftw libshtns l
 ifneq "$(EXCLUDE_INIT_MODE)" "true"
 	(cd mode_init; $(MAKE) FCINCLUDES="$(FCINCLUDES) $(OCEAN_SHARED_INCLUDES)" all )
 endif
-	(cd driver; $(MAKE) FCINCLUDES="$(FCINCLUDES) $(OCEAN_SHARED_INCLUDES)" all )
+	(cd driver; $(MAKE) CPPFLAGS="$(CPPFLAGS)" FCINCLUDES="$(FCINCLUDES) $(OCEAN_SHARED_INCLUDES)" all )
 	if [ -e libdycore.a ]; then \
 		($(RM) libdycore.a) \
 	fi
@@ -145,13 +145,12 @@ libppr:
 		(pwd ; echo "Missing core_ocean/ppr/.git, did you forget to 'git submodule update --init --recursive' ?"; exit 1) \
 	fi
 
-libseaice:
+libseaice: shared
 ifeq "$(SEAICE_COLUMN)" "true"
-	(cd seaice_column; $(MAKE))
-	(cd seaice_driver; $(MAKE))
+	(cd seaice; $(MAKE) FFLAGS="${FFLAGS}" FCINCLUDES="$(FCINCLUDES) $(OCEAN_SHARED_INCLUDES)" CPPFLAGS="$(CPPFLAGS)" CPPINCLUDES="$(CPPINCLUDES)" all)
 endif
 
-shared: libcvmix libBGC libMARBL libgotm libshtns libfftw libppr libseaice
+shared: libcvmix libBGC libMARBL libgotm libshtns libfftw libppr
 	(cd shared; $(MAKE) FCINCLUDES="$(FCINCLUDES) $(OCEAN_SHARED_INCLUDES)")
 
 analysis_members: libcvmix shared libgotm
@@ -180,8 +179,7 @@ clean:
 		(cd FFTW; make clean; rm -f $(SHTNS_DIR)/lib/libfftw3*) \
 	fi
 ifeq "$(SEAICE_COLUMN)" "true"
-	(cd seaice_column; $(MAKE) clean)
-	(cd seaice_driver; $(MAKE) clean)
+	(cd seaice; $(MAKE) clean)
 endif
 	(cd mode_forward; $(MAKE) clean)
 	(cd mode_analysis; $(MAKE) clean)

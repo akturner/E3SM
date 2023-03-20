@@ -355,7 +355,7 @@ module seaice_core
 
          call mpas_stream_mgr_reset_alarms(domain % streamManager, direction=MPAS_STREAM_OUTPUT, ierr=ierr)
 
-         ! finalize the timstep
+         ! finalize the timestep
          call seaice_timestep_finalize(domain)
 
          ! check if the simulation is finished

@@ -23,7 +23,8 @@ module seaice_advection
 
   public :: &
        seaice_init_advection, &
-       seaice_run_advection
+       seaice_run_advection, &
+       seaice_reinitialize_diagnostics_advection
 
 contains
 
@@ -134,6 +135,71 @@ contains
     endif
 
   end subroutine seaice_run_advection
+
+!|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+!
+!  seaice_reinitialize_diagnostics_advection
+!
+!> \brief Reinitialize advection diagnostics
+!> \author Adrian K. Turner, LANL
+!> \date 27th September 2015
+!> \details
+!>  Reinitialize dynamics diagnostics
+!
+!-----------------------------------------------------------------------
+
+  subroutine seaice_reinitialize_diagnostics_advection(domain)
+
+    type(domain_type) :: domain
+
+    type(block_type), pointer :: blockPtr
+
+    type(MPAS_pool_type), pointer :: &
+         diagnosticsPool, &
+         tracersAggregatePool
+
+    ! diagnostic tendencies
+    real(kind=RKIND), dimension(:), pointer :: &
+         iceAreaTendencyTransport, &
+         iceVolumeTendencyTransport, &
+         iceAgeTendencyTransport, &
+         iceAreaCell, &
+         iceVolumeCell, &
+         iceAgeCell
+
+    logical, pointer :: &
+         config_use_ice_age
+
+    blockPtr => domain % blocklist
+    do while (associated(blockPtr))
+
+       ! tendancies
+       call MPAS_pool_get_config(blockPtr % configs, "config_use_ice_age", config_use_ice_age)
+
+       call MPAS_pool_get_subpool(blockPtr % structs, "advection_diagnostics", diagnosticsPool)
+       call MPAS_pool_get_subpool(blockPtr % structs, "tracers_aggregate", tracersAggregatePool)
+
+       call MPAS_pool_get_array(diagnosticsPool, "iceAreaTendencyTransport", iceAreaTendencyTransport)
+       call MPAS_pool_get_array(diagnosticsPool, "iceVolumeTendencyTransport", iceVolumeTendencyTransport)
+       call MPAS_pool_get_array(diagnosticsPool, "iceAgeTendencyTransport", iceAgeTendencyTransport)
+
+       call MPAS_pool_get_array(tracersAggregatePool, "iceAreaCell", iceAreaCell)
+       call MPAS_pool_get_array(tracersAggregatePool, "iceVolumeCell", iceVolumeCell)
+       call MPAS_pool_get_array(tracersAggregatePool, "iceAgeCell", iceAgeCell)
+
+       ! transport tendencies
+       iceAreaTendencyTransport   = iceAreaCell
+       iceVolumeTendencyTransport = iceVolumeCell
+       if (config_use_ice_age) then
+          iceAgeTendencyTransport = iceAgeCell
+       else
+          iceAgeTendencyTransport = 0.0_RKIND
+       endif
+
+       blockPtr => blockPtr % next
+    end do
+
+  end subroutine seaice_reinitialize_diagnostics_advection
 
 !-----------------------------------------------------------------------
 

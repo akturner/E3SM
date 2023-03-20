@@ -49,10 +49,12 @@ contains
     use seaice_diagnostics, only: &
          seaice_set_time_diagnostics, &
          seaice_check_state, &
-         seaice_load_balance_timers
+         seaice_load_balance_timers, &
+         seaice_diagnostic_tendencies
 
     use seaice_velocity_solver, only: &
-         seaice_run_velocity_solver
+         seaice_run_velocity_solver, &
+         seaice_reinitialize_diagnostics_velocity_solver
 
     use seaice_advection, only: &
          seaice_run_advection
@@ -84,18 +86,26 @@ contains
     type(block_type), pointer :: &
          block
 
+    type(MPAS_pool_type), pointer :: &
+         velocitySolverPool
+
     type (MPAS_pool_type), pointer :: &
          configs
 
     logical, pointer :: &
          config_use_dynamics, &
-         config_use_advection
+         config_use_advection, &
+         config_use_column_package
 
     integer, pointer :: &
          config_dynamics_subcycle_number
 
     integer :: &
          iDynamicsSubcycle
+
+    real(kind=RKIND), pointer :: &
+         config_dt, &
+         dynamicsTimeStep
 
 #ifndef MPAS_PERF_MOD_TIMERS
     ! set halo timer
@@ -111,6 +121,8 @@ contains
 
     call store_timestep_counter(domain, itimestep)
 
+    call mpas_pool_get_config(domain % configs, "config_dt", config_dt)
+
     ! reinitialize diagnostics
     call mpas_timer_start("Reinitialize diagnostics thermodynamics/bgc")
     call seaice_column_reinitialize_diagnostics_thermodynamics(domain)
@@ -120,18 +132,28 @@ contains
     configs => domain % configs
 
     call MPAS_pool_get_config(configs, "config_use_advection", config_use_advection)
+    call MPAS_pool_get_config(configs, "config_use_column_package", config_use_column_package)
 
     ! prescribed ice mode
     call seaice_run_prescribed_ice(domain)
 
     ! pre dynamics column physics
     call mpas_timer_start("Column pre-dynamics")
-    call seaice_column_predynamics_time_integration(domain, clock)
+    call seaice_column_predynamics_time_integration(domain, clock, config_dt)
     call mpas_timer_stop("Column pre-dynamics")
+
+    if (config_use_column_package) then
+       call mpas_timer_start("Thermodynamic diagnostic tendencies")
+       call seaice_diagnostic_tendencies(domain, "thermodynamics", config_dt, config_dt)
+       call mpas_timer_stop("Thermodynamic diagnostic tendencies")
+    endif
 
     ! dynamics
     call MPAS_pool_get_config(configs, "config_use_dynamics", config_use_dynamics)
     if (config_use_dynamics) then
+
+       call MPAS_pool_get_subpool(domain % blocklist % structs, "velocity_solver", velocitySolverPool)
+       call MPAS_pool_get_array(velocitySolverPool, "dynamicsTimeStep", dynamicsTimeStep)
 
        ! loop of dynamcis subcycle
        call MPAS_pool_get_config(configs, "config_dynamics_subcycle_number", config_dynamics_subcycle_number)
@@ -139,7 +161,7 @@ contains
 
           ! reinitialize dynamics diagnostics
           call mpas_timer_start("Reinitialize diagnostics dynamics")
-          call seaice_column_reinitialize_diagnostics_dynamics(domain)
+          call seaice_reinitialize_diagnostics_dynamics(domain)
           call mpas_timer_stop("Reinitialize diagnostics dynamics")
 
           ! velocity solve
@@ -155,15 +177,20 @@ contains
 
           ! ridging
           call mpas_timer_start("Column")
-          call seaice_column_dynamics_time_integration(domain, clock)
+          call seaice_column_dynamics_time_integration(domain, clock, dynamicsTimeStep, config_dynamics_subcycle_number)
           call mpas_timer_stop("Column")
+
+          ! Transport diagnostic tendencies
+          call mpas_timer_start("Transport diagnostic tendencies")
+          call seaice_diagnostic_tendencies(domain, "transport", dynamicsTimeStep, 0.0_RKIND)
+          call mpas_timer_stop("Transport diagnostic tendencies")
 
        enddo ! iDynamicsSubcycle
     endif ! config_use_dynamics
 
     ! shortwave
     call mpas_timer_start("Column post-dynamics")
-    call seaice_column_postdynamics_time_integration(domain, clock)
+    call seaice_column_postdynamics_time_integration(domain, clock, config_dt)
     call mpas_timer_stop("Column post-dynamics")
 
     ! check the physical state of the model
@@ -173,6 +200,42 @@ contains
     call seaice_set_special_boundaries_tracers(domain)
 
   end subroutine seaice_timestep!}}}
+
+!|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+!
+!  seaice_reinitialize_diagnostics_dynamics
+!
+!> \brief Reinitialize dynamics diagnostics
+!> \author Adrian K. Turner, LANL
+!> \date 10th January 2023
+!> \details
+!>  Reinitialize dynamics diagnostics
+!
+!-----------------------------------------------------------------------
+
+  subroutine seaice_reinitialize_diagnostics_dynamics(domain)!{{{
+
+    use seaice_velocity_solver, only: &
+         seaice_reinitialize_diagnostics_velocity_solver
+
+    use seaice_advection, only: &
+         seaice_reinitialize_diagnostics_advection
+
+    use seaice_column, only: &
+         seaice_column_reinitialize_diagnostics_dynamics
+
+    type(domain_type) :: domain
+
+    ! reinitialize dynamics diagnostics
+    call seaice_reinitialize_diagnostics_velocity_solver(domain)
+
+    ! reinitialize dynamics diagnostics
+    call seaice_reinitialize_diagnostics_advection(domain)
+
+    ! reinitialize column dynamics diagnostics
+    call seaice_column_reinitialize_diagnostics_dynamics(domain)
+
+  end subroutine seaice_reinitialize_diagnostics_dynamics!}}}
 
 !|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 !

@@ -449,7 +449,7 @@ contains
           call MPAS_pool_get_dimension(blockPtr % dimensions, "nCells", nCells)
 
           call MPAS_pool_get_subpool(blockPtr % structs, "special_boundaries", specialBoundariesPool)
-          call MPAS_pool_get_subpool(blockPtr % structs, "tracers", tracersPool)
+          call MPAS_pool_get_subpool(blockPtr % structs, "seaice_tracers", tracersPool)
 
           call MPAS_pool_get_array(specialBoundariesPool, "tracerBoundaryType", tracerBoundaryType)
           call MPAS_pool_get_array(specialBoundariesPool, "tracerBoundarySourceLocal", tracerBoundarySource)

@@ -1,0 +1,241 @@
+        <packages>
+
+		<!-- forcing -->
+		<package name="pkgForcing" description="On if the framework forcing is being used"/>
+
+	</packages>
+
+	<!--atmos coupling -->
+	<var_struct name="atmos_coupling" time_levs="1">
+		<var name="airLevelHeight"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="m"
+		     default_value="10.0"
+		/>
+		<var name="airPotentialTemperature"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="K"
+		     default_value="253.0"
+		/>
+		<var name="airTemperature"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="K"
+		     default_value="253.0"
+		/>
+		<var name="airSpecificHumidity"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="1"
+		     default_value="0.0006"
+		/>
+		<var name="airDensity"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="kg m-3"
+		     default_value="1.3"
+		/>
+		<var name="shortwaveVisibleDirectDown"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="W m-2"
+		/>
+		<var name="shortwaveVisibleDiffuseDown"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="W m-2"
+		/>
+		<var name="shortwaveIRDirectDown"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="W m-2"
+		/>
+		<var name="shortwaveIRDiffuseDown"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="W m-2"
+		/>
+		<var name="longwaveDown"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="W m-2"
+		     default_value="180.0"
+		/>
+		<var name="rainfallRate"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="kg m-2 s-1"
+		/>
+		<var name="snowfallRate"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="kg m-2 s-1"
+		/>
+		<var name="uAirVelocity"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="m s-1"
+		     default_value="5.0"
+		/>
+		<var name="vAirVelocity"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="m s-1"
+		     default_value="5.0"
+		/>
+		<var name="atmosReferenceSpeed10m"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="m s-1"
+		/>
+		<var name="atmosReferenceTemperature2m"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="K"
+		/>
+		<var name="atmosReferenceHumidity2m"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="1"
+		/>
+	</var_struct>
+
+	<!--atmos forcing -->
+	<var_struct name="atmos_forcing" time_levs="1">
+		<var name="windSpeed"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="m s-1"
+		/>
+		<var name="uAirStress"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="N m-2"
+		     default_value="0.05"
+		/>
+		<var name="vAirStress"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="N m-2"
+		     default_value="0.05"
+		/>
+		<var name="shortwaveDown"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="W m-2"
+		/>
+		<var name="cloudFraction"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="1"
+		/>
+		<var name="sensibleTransferCoefficient"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="W m-2 K-1"
+		/>
+		<var name="latentTransferCoefficient"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="W m-2"
+		/>
+	</var_struct>
+
+	<!--alternative atmos forcing -->
+	<var_struct name="alternative_atmos_forcing" time_levs="1">
+		<var name="latentHeatFluxCouple"
+		     type="real"
+		     dimensions="nCategories nCells Time"
+		/>
+		<var name="sensibleHeatFluxCouple"
+		     type="real"
+		     dimensions="nCategories nCells Time"
+		/>
+		<var name="surfaceHeatFluxCouple"
+		     type="real"
+		     dimensions="nCategories nCells Time"
+		/>
+		<var name="surfaceConductiveFluxCouple"
+		     type="real"
+		     dimensions="nCategories nCells Time"
+		/>
+		<var name="airStressForcingU"
+		     type="real"
+		     dimensions="nCells Time"
+		/>
+		<var name="airStressForcingV"
+		     type="real"
+		     dimensions="nCells Time"
+		/>
+	</var_struct>
+
+	<!--ocean coupling -->
+	<var_struct name="ocean_coupling" time_levs="1">
+		<var name="seaSurfaceTemperature"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="C"
+		/>
+		<var name="seaSurfaceSalinity"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="1e-3"
+		     default_value="34.0"
+		/>
+		<var name="seaFreezingTemperature"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="C"
+		/>
+		<var name="freezingMeltingPotential"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="W m-2"
+		/>
+		<var name="frazilMassAdjust"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="kg m-2 s-1"
+		/>
+		<var name="uOceanVelocity"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="m s-1"
+		/>
+		<var name="vOceanVelocity"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="m s-1"
+		/>
+		<var name="seaSurfaceTiltU"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="1"
+		/>
+		<var name="seaSurfaceTiltV"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="1"
+		/>
+		<var name="oceanMixedLayerDepth"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="m"
+		     default_value="20.0"
+		/>
+		<var name="oceanHeatFluxConvergence"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="W m-2"
+		/>
+		<var name="landIceMaskSeaice"
+		     type="integer"
+		     dimensions="nCells Time"
+		/>
+		<var name="landIceMaskSeaiceVertex"
+		     type="integer"
+		     dimensions="nVertices Time"
+		/>
+	</var_struct>

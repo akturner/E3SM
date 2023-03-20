@@ -255,7 +255,7 @@ contains
          vOceanVelocity
 
     call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
-    call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+    call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
     call MPAS_pool_get_subpool(block % structs, "velocity_solver", velocity_solver)
     call MPAS_pool_get_subpool(block % structs, "boundary", boundary)
     call MPAS_pool_get_subpool(block % structs, "atmos_forcing", atmos_forcing)
@@ -672,7 +672,7 @@ contains
     integer, pointer :: nCellsSolve
     integer :: iCell
 
-    call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+    call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
 
     call MPAS_pool_get_array(tracers, "iceAreaCategory", iceAreaCategory, 1)
     call MPAS_pool_get_array(tracers, "surfaceTemperature", surfaceTemperature, 1)

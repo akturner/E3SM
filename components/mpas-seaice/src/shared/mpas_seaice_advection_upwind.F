@@ -428,7 +428,7 @@ contains
     do while (associated(block))
 
        call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
-       call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+       call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
        call MPAS_pool_get_subpool(block % structs, "tracer_tendencies", tracer_tendencies)
        call MPAS_pool_get_subpool(block % structs, "tracer_edge_fluxes", tracer_edge_fluxes)
        call MPAS_pool_get_subpool(block % structs, "tracer_conservation", tracer_conservation)
@@ -463,7 +463,7 @@ contains
 
        call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
        call MPAS_pool_get_subpool(block % structs, "boundary", boundary)
-       call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+       call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
        call MPAS_pool_get_subpool(block % structs, "tracer_tendencies", tracer_tendencies)
        call MPAS_pool_get_subpool(block % structs, "tracer_edge_fluxes", tracer_edge_fluxes)
        call MPAS_pool_get_subpool(block % structs, "tracer_conservation", tracer_conservation)
@@ -1800,7 +1800,7 @@ contains
     integer :: &
          iTracerVariable
 
-    call MPAS_pool_get_subpool(domain % blocklist % structs, "tracers", tracers_fields)
+    call MPAS_pool_get_subpool(domain % blocklist % structs, "seaice_tracers", tracers_fields)
 
     do iTracerVariable = 1, nTracerVariables
 

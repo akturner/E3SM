@@ -1,0 +1,236 @@
+
+
+                <dim name="ONE"
+			definition="1"
+			description="The number one as a dimension."
+		/>
+		<dim name="nCategories"
+			definition="namelist:config_nCategories"
+			description="The number of ice thickness categories."
+		/>
+		<dim name="nIceLayers"
+			definition="namelist:config_nIceLayers"
+			description="The number of ice layers in the vertical direction."
+		/>
+		<dim name="nSnowLayers"
+			definition="namelist:config_nSnowLayers"
+			description="The number of snow layers in the vertical direction."
+		/>
+		<dim name="nIceLayersP1"
+			definition="nIceLayers+1"
+			description="The number of ice layers in the vertical direction plus one."
+		/>
+		<dim name="nCategoriesP1"
+			definition="nCategories+1"
+			description="The number of ice thickness categories plus one."
+		/>
+		<dim name="nAerosols"
+			definition="0"
+			description="Number of aerosol species carried in the ice (NCAR scheme)"
+		/>
+		<dim name="nSpectralIntervals"
+			definition="3"
+			description="Number of spectral intervals in the radiation calculation"
+		/>
+		<dim name="nGrainAgingTemperature"
+			definition="11"
+			description="Number of temperature dependent factors in snow grain aging"
+		/>
+		<dim name="nGrainAgingTempGradient"
+			definition="31"
+			description="Number of temperature gradient dependent factors in snow grain aging"
+		/>
+		<dim name="nGrainAgingSnowDensity"
+			definition="8"
+			description="Number of snow density dependent factors in snow grain aging"
+		/>
+		<dim name="nBioLayers"
+			definition="7"
+			description="Number of levels in the biological grid"
+		/>
+		<dim name="nBioLayersP1"
+			definition="nBioLayers+1"
+			description="Number of levels in the interface biological grid"
+		/>
+		<dim name="nBioLayersP2"
+			definition="nBioLayers+2"
+			description="Number of levels in the biological grid plus two"
+		/>
+		<dim name="nBioLayersP3"
+			definition="nBioLayers+3"
+			description="Number of biological levels in the ice and snow"
+		/>
+		<dim name="maxAlgaeType"
+			definition="3"
+			description="Maximum number of ice algal types"
+		/>
+		<dim name="maxDOCType"
+			definition="3"
+			description="Maximum number of dissolved organic carbon groups"
+		/>
+		<dim name="maxDICType"
+			definition="1"
+			description="Maximum number of dissolved inorganic carbon groups"
+		/>
+		<dim name="maxDONType"
+			definition="1"
+			description="Maximum number of dissolved organic nitrogen groups"
+		/>
+		<dim name="maxIronType"
+			definition="2"
+			description="Maximum number of dissolved or particulate iron groups"
+		/>
+		<dim name="maxBCType"
+			definition="2"
+			description="Maximum number of black carbon species carried in the ice"
+		/>
+		<dim name="maxDustType"
+			definition="4"
+			description="Maximum number of dust species carried in the ice"
+		/>
+		<dim name="maxAerosolType"
+			definition="maxBCType+maxDustType"
+			description="Total maximum number of aerosols carried in the ice"
+		/>
+		<dim name="nModal1"
+			definition="10"
+			description="Specifies the second dimension of the modal aerosol optical parameter matrix"
+		/>
+		<dim name="nModal2"
+			definition="8"
+			description="Specifies the third dimension of the modal aerosol optical parameter matrix"
+		/>
+		<dim name="nAlgae"
+			definition="2"
+			description="Number of algal species in use"
+		/>
+		<dim name="nDOC"
+			definition="2"
+			description="Number of dissolved organic carbon groups in use"
+		/>
+		<dim name="nDIC"
+			definition="1"
+			description="Number of dissolved inorganic carbon groups in use"
+		/>
+		<dim name="nDON"
+			definition="1"
+			description="Number of dissolved organic nitrogen groups in use"
+		/>
+		<dim name="nParticulateIron"
+			definition="1"
+			description="Number of particulate iron species in use"
+		/>
+		<dim name="nDissolvedIron"
+			definition="1"
+			description="Number of dissolved iron species in use"
+		/>
+		<dim name="nzAerosols"
+			definition="3"
+			description="Number of aerosol species carried in the ice"
+		/>
+		<dim name="nShortwaveBio"
+			definition="(nIceLayers+nSnowLayers+2)*(ONE+nzAerosols)"
+			description="Number of levels in the radiation calculation with biological species"
+		/>
+		<dim name="nAlgaeLayers"
+			definition="nBioLayersP3*nAlgae"
+			description="Total number of algal layers including two for snow plus the interface grid"
+		/>
+		<dim name="nAlgaeIceLayers"
+			definition="nBioLayersP1*nAlgae"
+			description="Total number of algal layers in the ice"
+		/>
+		<dim name="nAlgaeSnowLayers"
+			definition="TWO*nAlgae"
+			description="Total number of algal layers in the snow"
+		/>
+		<dim name="nDOCLayers"
+			definition="nBioLayersP3*nDOC"
+			description="Total number of DOC layers including two for snow plus the interface grid"
+		/>
+		<dim name="nDOCIceLayers"
+			definition="nBioLayersP1*nDOC"
+			description="Total number of DOC layers in the ice"
+		/>
+		<dim name="nDOCSnowLayers"
+			definition="TWO*nDOC"
+			description="Total number of DOC layers in the snow"
+		/>
+		<dim name="nDICLayers"
+			definition="nBioLayersP3*nDIC"
+			description="Total number of DIC layers including two for snow plus the interface grid"
+		/>
+		<dim name="nDICIceLayers"
+			definition="nBioLayersP1*nDIC"
+			description="Total number of DIC layers in the ice"
+		/>
+		<dim name="nDICSnowLayers"
+			definition="TWO*nDIC"
+			description="Total number of DIC layers in the snow"
+		/>
+		<dim name="nDONLayers"
+			definition="nBioLayersP3*nDON"
+			description="Total number of DON layers including two for snow plus the interface grid"
+		/>
+		<dim name="nDONIceLayers"
+			definition="nBioLayersP1*nDON"
+			description="Total number of DON layers in the ice"
+		/>
+		<dim name="nDONSnowLayers"
+			definition="TWO*nDON"
+			description="Total number of DON layers in the snow"
+		/>
+		<dim name="nParticulateIronLayers"
+			definition="nBioLayersP3*nParticulateIron"
+			description="Total number of particulate iron layers including two for snow plus the interface grid"
+		/>
+		<dim name="nPartIronIceLayers"
+			definition="nBioLayersP1*nParticulateIron"
+			description="Total number of particulate iron layers in the ice"
+		/>
+		<dim name="nPartIronSnowLayers"
+			definition="TWO*nParticulateIron"
+			description="Total number of particulate iron layers in the snow"
+		/>
+		<dim name="nDissolvedIronLayers"
+			definition="nBioLayersP3*nDissolvedIron"
+			description="Total number of dissolved iron layers including two for snow plus the interface grid"
+		/>
+		<dim name="nDisIronIceLayers"
+			definition="nBioLayersP1*nDissolvedIron"
+			description="Total number of dissolved iron layers in the ice"
+		/>
+		<dim name="nDisIronSnowLayers"
+			definition="TWO*nDissolvedIron"
+			description="Total number of dissolved iron layers in the snow"
+		/>
+		<dim name="nzAerosolsLayers"
+			definition="nBioLayersP3*nzAerosols"
+			description="Total number of z-aerosol layers including two for snow plus the interface grid"
+		/>
+		<dim name="nzAerosolsSnowLayers"
+			definition="TWO*nzAerosols"
+			description="Total number of z-aerosol layers in the snow"
+		/>
+		<dim name="nzAerosolsIceLayers"
+			definition="nBioLayersP1*nzAerosols"
+			description="Total number of z-aerosol layers in the ice"
+		/>
+		<dim name="nZBGCTracers"
+			definition="29"
+			description="Maximum number of distinct biological or chemical tracer types"
+		/>
+		<dim name="nSpectralIntervalsSNICAR"
+			definition="5"
+			units="unitless"
+			description="The number of shortwave spectral bands used in snow SNICAR model (1 visible band and 4 near-IR bands) for radiative transfer calculation"
+		/>
+		<dim name="nSnowGrainRadiusSNICAR"
+			definition="1471"
+			units="unitless"
+			description="The number of snow grain radius used in SNICAR model, radius are ranging from 30 to 150 microns with 1 micron interval"
+		/>
+		<dim name="nHemispheres"
+			definition="3"
+			description="The number of hemispheres (global, north, south)."
+		/>

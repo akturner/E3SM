@@ -29,10 +29,12 @@ module seaice_forcing
        seaice_forcing_init, &
        seaice_forcing_get, &
        seaice_forcing_write_restart_times, &
-       seaice_reset_coupler_fluxes,  &
-       post_atmospheric_coupling,  &
-       post_atmospheric_forcing,   &
-       post_oceanic_coupling
+       seaice_reset_coupler_fluxes, &
+       seaice_prepare_atmospheric_variables, &
+       seaice_post_atmospheric_coupling, &
+       seaice_post_atmospheric_forcing, &
+       seaice_post_oceanic_coupling, &
+       seaice_prepare_oceanic_variables
 
   type (MPAS_forcing_group_type), pointer, public :: seaiceForcingGroups
 
@@ -75,6 +77,15 @@ contains
          config_use_forcing, &
          config_use_data_icebergs
 
+    character(len=strKIND), pointer :: &
+         config_atmospheric_forcing_type
+
+    integer :: &
+         ierr
+
+    type (mpas_time_type) :: &
+         currentTime
+
     call MPAS_pool_get_config(domain % configs, "config_use_forcing", config_use_forcing)
     call MPAS_pool_get_config(domain % configs, "config_use_data_icebergs", config_use_data_icebergs)
 
@@ -85,6 +96,14 @@ contains
 
        ! init the ocean forcing
        call init_oceanic_forcing(domain)
+
+    else
+
+       call MPAS_pool_get_config(domain % configs, "config_atmospheric_forcing_type", config_atmospheric_forcing_type)
+       if (config_atmospheric_forcing_type == "CORE_init") then
+          currentTime = MPAS_get_clock_time(clock, MPAS_NOW, ierr=ierr)
+          call seaice_prepare_atmospheric_variables(domain, currentTime)
+       endif
 
     endif
 
@@ -466,7 +485,8 @@ contains
 
     type (MPAS_clock_type) :: simulationClock
 
-    type (block_type), pointer :: block
+    type (MPAS_time_type) :: &
+         currentForcingTime
 
     real(kind=RKIND), pointer :: &
          config_dt
@@ -503,29 +523,22 @@ contains
 
     endif
 
-    block => domain % blocklist
-    do while (associated(block))
+    ! get the current time
+    call MPAS_forcing_get_forcing_time(&
+         seaiceForcingGroups, &
+         "seaice_atmospheric_forcing_sixhrly", &
+         currentForcingTime)
 
-       ! convert the input forcing variables to the coupling variables
-       select case (trim(config_atmospheric_forcing_type))
-       case ("CORE")
-          call prepare_atmospheric_coupling_variables_CORE(block)
-       end select
-
-       ! perform post coupling operations
-       call post_atmospheric_coupling(block)
-
-       ! perform post forcing
-       call post_atmospheric_forcing(block)
-
-       block => block % next
-    end do
+    ! prepare coupling variables
+    call seaice_prepare_atmospheric_variables(&
+         domain, &
+         currentForcingTime)
 
   end subroutine atmospheric_forcing
 
 !|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 !
-!  prepare_atmospheric_coupling_variables_CORE
+!  seaice_prepare_atmospheric_variables
 !
 !> \brief
 !> \author Adrian K. Turner, LANL
@@ -535,13 +548,70 @@ contains
 !
 !-----------------------------------------------------------------------
 
-  subroutine prepare_atmospheric_coupling_variables_CORE(block)
+  subroutine seaice_prepare_atmospheric_variables(&
+       domain, &
+       currentForcingTime)
+
+    type (domain_type) :: &
+         domain
+
+    type (MPAS_time_type), intent(in) :: &
+         currentForcingTime
+
+    type (block_type), pointer :: &
+         blockPtr
+
+    character(len=strKIND), pointer :: &
+         config_atmospheric_forcing_type
+
+    call mpas_pool_get_config(domain % configs, 'config_atmospheric_forcing_type', &
+                                                 config_atmospheric_forcing_type)
+
+    blockPtr => domain % blocklist
+    do while (associated(blockPtr))
+
+       ! convert the input forcing variables to the coupling variables
+       select case (trim(config_atmospheric_forcing_type))
+       case ("CORE","CORE_init")
+          call seaice_prepare_atmospheric_coupling_variables_CORE(blockPtr, currentForcingTime)
+       end select
+
+       ! perform post coupling operations
+       call seaice_post_atmospheric_coupling(blockPtr)
+
+       ! perform post forcing
+       call seaice_post_atmospheric_forcing(blockPtr)
+
+       blockPtr => blockPtr % next
+    end do
+
+  end subroutine seaice_prepare_atmospheric_variables
+
+!|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+!
+!  seaice_prepare_atmospheric_coupling_variables_CORE
+!
+!> \brief
+!> \author Adrian K. Turner, LANL
+!> \date
+!> \details
+!>
+!
+!-----------------------------------------------------------------------
+
+  subroutine seaice_prepare_atmospheric_coupling_variables_CORE(&
+       block, &
+       currentForcingTime)
 
     use seaice_constants, only: &
          seaiceFreshWaterFreezingPoint, &
          pii
 
-    type (block_type), pointer :: block
+    type (block_type), pointer :: &
+         block
+
+    type (MPAS_time_type), intent(in) :: &
+         currentForcingTime
 
     type (mpas_pool_type), pointer :: &
          mesh, &
@@ -570,9 +640,6 @@ contains
          lonCell, &
          latCell, &
          iceAreaCell
-
-    type (MPAS_time_type) :: &
-         currentForcingTime
 
     real(kind=RKIND) :: &
          secondsToday
@@ -615,12 +682,6 @@ contains
 
     call MPAS_pool_get_array(tracers_aggregate, "iceAreaCell", iceAreaCell)
     call MPAS_pool_get_array(tracers_aggregate, "surfaceTemperatureCell", surfaceTemperatureCell)
-
-    ! get the current time
-    call MPAS_forcing_get_forcing_time(&
-         seaiceForcingGroups, &
-         "seaice_atmospheric_forcing_sixhrly", &
-         currentForcingTime)
 
     ! get the number of seconds so far today
     call get_seconds_today(&
@@ -688,11 +749,11 @@ contains
 
     enddo ! iCell
 
-  end subroutine prepare_atmospheric_coupling_variables_CORE
+  end subroutine seaice_prepare_atmospheric_coupling_variables_CORE
 
 !|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 !
-!  post_atmospheric_coupling
+!  seaice_post_atmospheric_coupling
 !
 !> \brief
 !> \author Adrian K. Turner, LANL
@@ -702,7 +763,7 @@ contains
 !
 !-----------------------------------------------------------------------
 
-  subroutine post_atmospheric_coupling(block)
+  subroutine seaice_post_atmospheric_coupling(block)
 
     use seaice_mesh, only: &
          seaice_latlon_vector_rotation_forward
@@ -808,11 +869,11 @@ contains
 
     enddo ! iCell
 
-  end subroutine post_atmospheric_coupling
+  end subroutine seaice_post_atmospheric_coupling
 
 !|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 !
-!  post_atmospheric_forcing
+!  seaice_post_atmospheric_forcing
 !
 !> \brief
 !> \author Adrian K. Turner, LANL
@@ -822,7 +883,7 @@ contains
 !
 !-----------------------------------------------------------------------
 
-  subroutine post_atmospheric_forcing(block)
+  subroutine seaice_post_atmospheric_forcing(block)
 
     use seaice_constants, only: &
          seaiceAirSpecificHeat, &
@@ -884,7 +945,7 @@ contains
 
     enddo ! iCell
 
-  end subroutine post_atmospheric_forcing
+  end subroutine seaice_post_atmospheric_forcing
 
 !|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 !
@@ -1622,21 +1683,56 @@ contains
 
     endif
 
-    block => domain % blocklist
-    do while (associated(block))
+    ! prepare coupling variables
+    call seaice_prepare_oceanic_variables(&
+         domain, &
+         firstTimeStep)
+
+  end subroutine oceanic_forcing
+
+!|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+!
+!  seaice_prepare_oceanic_coupling_variables
+!
+!> \brief
+!> \author Adrian K. Turner, LANL
+!> \date
+!> \details
+!>
+!
+!-----------------------------------------------------------------------
+
+  subroutine seaice_prepare_oceanic_variables(domain, firstTimeStep)
+
+    type (domain_type) :: &
+         domain
+
+    logical, intent(in) :: &
+         firstTimeStep
+
+    type(block_type), pointer :: &
+         blockPtr
+
+    character(len=strKIND), pointer :: &
+         config_forcing_sst_type
+
+    call mpas_pool_get_config(domain % configs, 'config_forcing_sst_type', config_forcing_sst_type)
+
+    blockPtr => domain % blocklist
+    do while (associated(blockPtr))
 
        ! convert the input forcing variables to the coupling variables
        select case (trim(config_forcing_sst_type))
        case ("ncar")
-          call prepare_oceanic_coupling_variables_ncar(block, firstTimeStep)
+          call prepare_oceanic_coupling_variables_ncar(blockPtr, firstTimeStep)
        end select
 
-       call post_oceanic_coupling(block)
+       call seaice_post_oceanic_coupling(blockPtr)
 
-       block => block % next
+       blockPtr => blockPtr % next
     end do
 
-  end subroutine oceanic_forcing
+  end subroutine seaice_prepare_oceanic_variables
 
 !|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 !
@@ -1724,7 +1820,7 @@ contains
 
 !|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 !
-!  post_oceanic_coupling
+!  seaice_post_oceanic_coupling
 !
 !> \brief
 !> \author Adrian K. Turner, LANL
@@ -1734,7 +1830,7 @@ contains
 !
 !-----------------------------------------------------------------------
 
-  subroutine post_oceanic_coupling(block)
+  subroutine seaice_post_oceanic_coupling(block)
 
     use seaice_mesh, only: &
          seaice_latlon_vector_rotation_forward
@@ -1828,7 +1924,7 @@ contains
 
     endif ! on_a_sphere
 
-  end subroutine post_oceanic_coupling
+  end subroutine seaice_post_oceanic_coupling
 
 !-----------------------------------------------------------------------
 ! data iceberg forcing

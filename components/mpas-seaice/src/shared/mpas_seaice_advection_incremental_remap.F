@@ -2506,7 +2506,7 @@ contains
        if (verboseRun) call mpas_log_write('Convert volume to thickness')
 
        ! get tracer pool and work array
-       call mpas_pool_get_subpool(block % structs, 'tracers', tracerPool)
+       call mpas_pool_get_subpool(block % structs, 'seaice_tracers', tracerPool)
        call mpas_pool_get_subpool(block % structs, 'incremental_remap', incrementalRemapPool)
        call mpas_pool_get_array(incrementalRemapPool, 'workCategoryCell', workCategoryCell)
 
@@ -2612,7 +2612,7 @@ contains
        if (verboseRun) call mpas_log_write('Convert thickness to volume')
 
        ! get tracer pool and work array
-       call mpas_pool_get_subpool(block % structs, 'tracers', tracerPool)
+       call mpas_pool_get_subpool(block % structs, 'seaice_tracers', tracerPool)
        call mpas_pool_get_subpool(block % structs, 'incremental_remap', incrementalRemapPool)
        call mpas_pool_get_array(incrementalRemapPool, 'workCategoryCell', workCategoryCell)
 
@@ -2892,7 +2892,7 @@ contains
     ! get pools
     call mpas_pool_get_subpool(block % structs, 'mesh', meshPool)
     call mpas_pool_get_subpool(block % structs, 'velocity_solver', velocityPool)
-    call mpas_pool_get_subpool(block % structs, 'tracers', tracerPool)
+    call mpas_pool_get_subpool(block % structs, 'seaice_tracers', tracerPool)
     call mpas_pool_get_subpool(block % structs, 'incremental_remap', incrementalRemapPool)
 
     ! get config options

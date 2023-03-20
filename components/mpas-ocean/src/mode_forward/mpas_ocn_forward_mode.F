@@ -97,6 +97,8 @@ module ocn_forward_mode
 
 #ifdef SEAICE_COLUMN
    use ocn_seaice_column
+   use seaice_analysis_driver
+   use seaice_column
 #endif
 
    implicit none
@@ -243,6 +245,9 @@ module ocn_forward_mode
 
       ! Read any analysis initialization
       call ocn_analysis_bootstrap(domain, err=err_tmp)
+#ifdef SEAICE_COLUMN
+      call seaice_analysis_bootstrap(domain, err=err_tmp)
+#endif
 
       call mpas_timer_stop('io_read')
       if (ierr /= 0) return
@@ -367,6 +372,15 @@ module ocn_forward_mode
           call mpas_log_write('An error was encountered while initializing ' &
                // 'the analysis members in the MPAS-Ocean forward mode', MPAS_LOG_CRIT)
       endif
+#ifdef SEAICE_COLUMN
+      call seaice_analysis_init(domain, err_tmp)
+      ierr = ior(ierr, err_tmp)
+      if(ierr.eq.1) then
+          call mpas_log_write('An error was encountered while initializing ' &
+               // 'the sea ice analysis members in the MPAS-Ocean forward mode', MPAS_LOG_CRIT)
+      endif
+#endif
+
 
       if (config_use_surface_salinity_monthly_restoring) then
       !initialize the alarm for reading salinity data for restoring
@@ -513,7 +527,7 @@ module ocn_forward_mode
 
 #ifdef SEAICE_COLUMN
       ! Initialize sea ice column package
-      call ocn_init_seaice(domain)
+      call ocn_seaice_init(domain)
 #endif
 
    !--------------------------------------------------------------------
@@ -600,6 +614,11 @@ module ocn_forward_mode
 
    function ocn_forward_mode_run(domain) result(ierr)!{{{
 
+#ifdef SEAICE_COLUMN
+     use seaice_initialize, only: &
+          seaice_init_post_clock_advance
+#endif
+
       type (domain_type), intent(inout) :: domain
 
       integer :: itimestep, err
@@ -609,6 +628,7 @@ module ocn_forward_mode
       type (MPAS_Time_Type) :: currTime
       character(len=StrKIND) :: timeStamp
       integer :: ierr, err_tmp
+      logical :: lstart
 
       type (mpas_pool_type), pointer :: averagePool
       type (mpas_pool_type), pointer :: meshPool
@@ -630,6 +650,9 @@ module ocn_forward_mode
       call mpas_log_write('Initial time ' // trim(timeStamp))
 #endif
       call ocn_analysis_compute_startup(domain, err)
+#ifdef SEAICE_COLUMN
+      call seaice_analysis_compute_startup(domain, err)
+#endif
 
       if (config_write_output_on_startup) then
           call mpas_timer_start('io_write')
@@ -672,6 +695,7 @@ module ocn_forward_mode
       !   time step, and time level 2 stores the state advanced dt in time by timestep(...)
       itimestep = 0
 
+      lstart = .true.
       do while (.not. mpas_is_clock_stop_time(domain % clock))
          call mpas_timer_start('io_read')
          call mpas_stream_mgr_read(domain % streamManager, ierr=ierr)
@@ -688,12 +712,23 @@ module ocn_forward_mode
          itimestep = itimestep + 1
          call mpas_advance_clock(domain % clock)
 
+         ! final seaiceinitialization after clock advance
+#ifdef SEAICE_COLUMN
+         if (lstart) then
+            call seaice_init_post_clock_advance(domain, domain % clock)
+            lstart = .false.
+         endif
+#endif
+
          currTime = mpas_get_clock_time(domain % clock, MPAS_NOW, ierr)
          call mpas_get_time(curr_time=currTime, dateTimeString=timeStamp, ierr=ierr)
          call mpas_log_write('Doing timestep ' // trim(timeStamp))
 
          ! pre-timestep analysis computation
          call ocn_analysis_precompute(domain, ierr)
+#ifdef SEAICE_COLUMN
+         call seaice_analysis_precompute(domain, ierr)
+#endif
 
 #ifdef MPAS_DEBUG
          call mpas_log_write( '   Computing surface flux arrays')
@@ -731,6 +766,11 @@ module ocn_forward_mode
 
          call mpas_timer_start("time integration")
 
+#ifdef SEAICE_COLUMN
+         ! Run sea ice column package time step
+         call ocn_seaice_run(domain)
+#endif
+
 #ifdef MPAS_DEBUG
          call mpas_log_write( '   Computing forward time step')
 #endif
@@ -751,6 +791,15 @@ module ocn_forward_mode
          call ocn_analysis_compute(domain, err)
          call ocn_analysis_restart(domain, err)
          call ocn_analysis_write(domain, err)
+#ifdef SEAICE_COLUMN
+         call seaice_analysis_compute(domain, err)
+         call seaice_analysis_restart(domain, err)
+         call seaice_analysis_write(domain, err)
+#endif
+
+#ifdef SEAICE_COLUMN
+         call seaice_column_reinitialize_fluxes(domain)
+#endif
 
 #ifdef MPAS_DEBUG
          call mpas_log_write( '   Performing I/O')
@@ -857,6 +906,10 @@ module ocn_forward_mode
 
       integer :: ierr
 
+#ifdef SEAICE_COLUMN
+      call ocn_seaice_finalize(domain)
+#endif
+
       ! destroy the ocean mesh structure
       call ocn_meshDestroy(ierr)
 
@@ -865,6 +918,9 @@ module ocn_forward_mode
       end if
 
       call ocn_analysis_finalize(domain, ierr)
+#ifdef SEAICE_COLUMN
+      call seaice_analysis_finalize(domain, ierr)
+#endif
 
       call ocn_vmix_gotm_finalize(domain, ierr)
 

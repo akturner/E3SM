@@ -299,7 +299,7 @@ contains
       do while (associated(block))
 
          call MPAS_pool_get_subpool(block % structs, "tracers_aggregate", tracersAggregatePool)
-         call MPAS_pool_get_subpool(block % structs, "tracers", tracersPool)
+         call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracersPool)
          call MPAS_pool_get_subpool(block % structs, "pondDiagnosticsAM", pondDiagnosticsAMPool)
 
          call MPAS_pool_get_array(tracersAggregatePool, "pondAreaCell", pondAreaCell)

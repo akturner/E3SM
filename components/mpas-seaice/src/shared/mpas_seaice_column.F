@@ -238,12 +238,15 @@ contains
 !
 !-----------------------------------------------------------------------
 
-  subroutine seaice_init_column_physics_package_variables(domain, clock)
+  subroutine seaice_init_column_physics_package_variables(domain, clock, dt)
 
     type(domain_type), intent(inout) :: domain
 
     type (MPAS_Clock_type), intent(in) :: &
          clock !< Input:
+
+    real(kind=RKIND), intent(in) :: &
+         dt
 
     logical, pointer :: &
          config_use_column_package, &
@@ -268,7 +271,7 @@ contains
 
        ! initialize biogoechemistry profiles
        if (config_use_column_biogeochemistry) &
-            call init_column_biogeochemistry_profiles(domain, ciceTracerObject)
+            call init_column_biogeochemistry_profiles(domain, dt, ciceTracerObject)
 
        ! history variables
        call init_column_history_variables(domain)
@@ -282,7 +285,7 @@ contains
        call MPAS_pool_get_config(domain % configs, "config_do_restart", config_do_restart)
        call MPAS_pool_get_config(domain % configs, "config_use_column_shortwave", config_use_column_shortwave)
        if (config_do_restart .and. config_use_column_shortwave) &
-            call seaice_init_column_shortwave(domain, clock)
+            call seaice_init_column_shortwave(domain, clock, dt)
 
     endif
 
@@ -515,7 +518,7 @@ contains
     do while (associated(block))
 
        call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
-       call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+       call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
        call MPAS_pool_get_subpool(block % structs, "tracers_aggregate", tracers_aggregate)
        call MPAS_pool_get_subpool(block % structs, "snow", snow)
 
@@ -638,7 +641,7 @@ contains
 !
 !-----------------------------------------------------------------------
 
-  subroutine seaice_init_column_shortwave(domain, clock)
+  subroutine seaice_init_column_shortwave(domain, clock, dt)
 
     use ice_colpkg, only: &
          colpkg_init_orbit, &
@@ -650,6 +653,8 @@ contains
     type(domain_type), intent(inout) :: domain
 
     type(MPAS_clock_type), intent(in) :: clock
+
+    real(kind=RKIND), intent(in) :: dt
 
     logical :: &
          abortFlag
@@ -740,6 +745,7 @@ contains
     call column_radiation(&
          domain, &
          clock, &
+         dt, &
          .true.)
 
     ! other shortwave initialization
@@ -747,7 +753,7 @@ contains
     do while (associated(block))
 
        call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
-       call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+       call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
        call MPAS_pool_get_subpool(block % structs, "shortwave", shortwave)
        call MPAS_pool_get_subpool(block % structs, "atmos_coupling", atmos_coupling)
 
@@ -905,7 +911,7 @@ contains
     do while (associated(block))
 
        call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
-       call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+       call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
        call MPAS_pool_get_subpool(block % structs, "atmos_coupling", atmos_coupling)
        call MPAS_pool_get_subpool(block % structs, "ocean_coupling", ocean_coupling)
        call MPAS_pool_get_subpool(block % structs, "initial", initial)
@@ -986,7 +992,7 @@ contains
        block => domain % blocklist
        do while (associated(block))
 
-          call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+          call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
 
           call MPAS_pool_get_array(tracers, "levelIceArea", levelIceArea, 1)
           call MPAS_pool_get_array(tracers, "levelIceVolume", levelIceVolume, 1)
@@ -1039,11 +1045,13 @@ contains
 !
 !-----------------------------------------------------------------------
 
-  subroutine seaice_column_predynamics_time_integration(domain, clock)
+  subroutine seaice_column_predynamics_time_integration(domain, clock, dt)
 
     type(domain_type), intent(inout) :: domain
 
     type(MPAS_clock_type), intent(in) :: clock
+
+    real(kind=RKIND), intent(in) :: dt
 
     logical, pointer :: &
          config_use_column_package, &
@@ -1053,9 +1061,6 @@ contains
          config_use_column_itd_thermodynamics, &
          config_calc_surface_temperature, &
          config_use_vertical_tracers
-
-    real(kind=RKIND), pointer :: &
-         config_dt
 
     call MPAS_pool_get_config(domain % configs, "config_use_column_package", config_use_column_package)
 
@@ -1068,8 +1073,6 @@ contains
        call MPAS_pool_get_config(domain % configs, "config_use_column_itd_thermodynamics", config_use_column_itd_thermodynamics)
        call MPAS_pool_get_config(domain % configs, "config_calc_surface_temperature", config_calc_surface_temperature)
        call MPAS_pool_get_config(domain % configs, "config_use_vertical_tracers", config_use_vertical_tracers)
-
-       call MPAS_pool_get_config(domain % configs, "config_dt", config_dt)
 
        !-----------------------------------------------------------------
        ! Scale radiation fields
@@ -1086,7 +1089,7 @@ contains
 
        call mpas_timer_start("Column vertical thermodynamics")
        if (config_use_column_vertical_thermodynamics) &
-            call column_vertical_thermodynamics(domain, clock)
+            call column_vertical_thermodynamics(domain, clock, dt)
        call mpas_timer_stop("Column vertical thermodynamics")
 
        !-----------------------------------------------------------------
@@ -1095,7 +1098,7 @@ contains
 
        call mpas_timer_start("Column biogeochemistry")
        if (config_use_column_biogeochemistry) &
-            call column_biogeochemistry(domain)
+            call column_biogeochemistry(domain, dt)
        call mpas_timer_stop("Column biogeochemistry")
 
        !-----------------------------------------------------------------
@@ -1104,16 +1107,16 @@ contains
 
        call mpas_timer_start("Column ITD thermodynamics")
        if (config_use_column_itd_thermodynamics) &
-            call column_itd_thermodynamics(domain, clock)
+            call column_itd_thermodynamics(domain, clock, dt)
        call mpas_timer_stop("Column ITD thermodynamics")
 
        !-----------------------------------------------------------------
        ! Update the aggregated state variables
        !-----------------------------------------------------------------
 
-       call mpas_timer_start("Column predyn update state")
-       call seaice_column_update_state(domain, "thermodynamics", config_dt, config_dt)
-       call mpas_timer_stop("Column predyn update state")
+       call mpas_timer_start("Column aggregate")
+       call seaice_column_aggregate(domain)
+       call mpas_timer_stop("Column aggregate")
 
        !-----------------------------------------------------------------
        ! Separate vertical snow and ice tracers for advection
@@ -1140,22 +1143,24 @@ contains
 !
 !-----------------------------------------------------------------------
 
-  subroutine seaice_column_dynamics_time_integration(domain, clock)
+  subroutine seaice_column_dynamics_time_integration(domain, clock, dynamicsTimeStep, dynamicsSubcycleNumber)
 
-    type(domain_type), intent(inout) :: domain
+    type(domain_type), intent(inout) :: &
+         domain
 
-    type(MPAS_clock_type), intent(in) :: clock
+    type(MPAS_clock_type), intent(in) :: &
+         clock
+
+    real(kind=RKIND), intent(in) :: &
+         dynamicsTimeStep
+
+    integer, intent(in) :: &
+         dynamicsSubcycleNumber
 
     logical, pointer :: &
          config_use_column_package, &
          config_use_column_ridging, &
          config_use_vertical_tracers
-
-    type(MPAS_pool_type), pointer :: &
-         velocitySolver
-
-    real(kind=RKIND), pointer :: &
-         dynamicsTimeStep
 
     call MPAS_pool_get_config(domain % configs, "config_use_column_package", config_use_column_package)
 
@@ -1163,9 +1168,6 @@ contains
 
        call MPAS_pool_get_config(domain % configs, "config_use_column_ridging", config_use_column_ridging)
        call MPAS_pool_get_config(domain % configs, "config_use_vertical_tracers", config_use_vertical_tracers)
-
-       call MPAS_pool_get_subpool(domain % blocklist % structs, "velocity_solver", velocitySolver)
-       call MPAS_pool_get_array(velocitySolver, "dynamicsTimeStep", dynamicsTimeStep)
 
        !-----------------------------------------------------------------
        ! Combine vertical snow and ice tracers
@@ -1182,16 +1184,17 @@ contains
 
        call mpas_timer_start("Column ridging")
        if (config_use_column_ridging) &
-            call column_ridging(domain)
+            call column_ridging(domain, dynamicsTimeStep, dynamicsSubcycleNumber)
        call mpas_timer_stop("Column ridging")
 
        !-----------------------------------------------------------------
        ! Update the aggregated state variables
        !-----------------------------------------------------------------
 
-       call mpas_timer_start("Column update state")
-       call seaice_column_update_state(domain, "transport", dynamicsTimeStep, 0.0_RKIND)
-       call mpas_timer_stop("Column update state")
+       call mpas_timer_start("Column aggregate")
+       call seaice_column_aggregate(domain)
+       call mpas_timer_stop("Column aggregate")
+
 
     else
 
@@ -1215,11 +1218,13 @@ contains
 !
 !-----------------------------------------------------------------------
 
-  subroutine seaice_column_postdynamics_time_integration(domain, clock)
+  subroutine seaice_column_postdynamics_time_integration(domain, clock, dt)
 
     type(domain_type), intent(inout) :: domain
 
     type(MPAS_clock_type), intent(in) :: clock
+
+    real(kind=RKIND), intent(in) :: dt
 
     logical, pointer :: &
          config_use_column_package, &
@@ -1242,7 +1247,7 @@ contains
 
        call mpas_timer_start("Column snow")
        if (config_use_column_snow_tracers) &
-            call column_snow(domain)
+            call column_snow(domain, dt)
        call mpas_timer_stop("Column snow")
 
        !-----------------------------------------------------------------
@@ -1251,7 +1256,7 @@ contains
 
        call mpas_timer_start("Column shortwave")
        if (config_use_column_shortwave) &
-            call column_radiation(domain, clock, .false.)
+            call column_radiation(domain, clock, dt, .false.)
        call mpas_timer_stop("Column shortwave")
 
        !-----------------------------------------------------------------
@@ -1259,7 +1264,7 @@ contains
        !-----------------------------------------------------------------
 
        call mpas_timer_start("Column coupling prep")
-       call seaice_column_coupling_prep(domain)
+       call seaice_column_coupling_prep(domain, dt)
        call mpas_timer_stop("Column coupling prep")
 
     endif
@@ -1278,7 +1283,7 @@ contains
 !
 !-----------------------------------------------------------------------
 
-  subroutine column_vertical_thermodynamics(domain, clock)
+  subroutine column_vertical_thermodynamics(domain, clock, dt)
 
     use ice_colpkg, only: &
          colpkg_step_therm1, &
@@ -1290,6 +1295,8 @@ contains
     type(domain_type), intent(inout) :: domain
 
     type(MPAS_clock_type), intent(in) :: clock
+
+    real(kind=RKIND), intent(in) :: dt
 
     type(block_type), pointer :: block
 
@@ -1314,9 +1321,6 @@ contains
          snow
 
     ! configs
-    real(kind=RKIND), pointer :: &
-         config_dt
-
     logical, pointer :: &
          config_use_aerosols, &
          config_use_prescribed_ice, &
@@ -1487,6 +1491,9 @@ contains
     real(kind=RKIND) :: &
          dayOfYear
 
+    integer, dimension(:), pointer :: &
+         itimestep
+
     ! day of year
     call get_day_of_year(clock, dayOfYear)
 
@@ -1495,7 +1502,7 @@ contains
 
        call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
        call MPAS_pool_get_subpool(block % structs, "icestate", icestate)
-       call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+       call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
        call MPAS_pool_get_subpool(block % structs, "tracers_aggregate", tracers_aggregate)
        call MPAS_pool_get_subpool(block % structs, "velocity_solver", velocity_solver)
        call MPAS_pool_get_subpool(block % structs, "atmos_coupling", atmos_coupling)
@@ -1509,10 +1516,9 @@ contains
        call MPAS_pool_get_subpool(block % structs, "shortwave", shortwave)
        call MPAS_pool_get_subpool(block % structs, "ponds", ponds)
        call MPAS_pool_get_subpool(block % structs, "aerosols", aerosols)
-       call MPAS_pool_get_subpool(block % structs, "diagnostics", diagnostics)
+       call MPAS_pool_get_subpool(block % structs, "column_diagnostics", diagnostics)
        call MPAS_pool_get_subpool(block % structs, "snow", snow)
 
-       call MPAS_pool_get_config(block % configs, "config_dt", config_dt)
        call MPAS_pool_get_config(block % configs, "config_use_aerosols", config_use_aerosols)
        call MPAS_pool_get_config(block % configs, "config_use_prescribed_ice", config_use_prescribed_ice)
        call MPAS_pool_get_config(block % configs, "config_use_snow_liquid_ponds", config_use_snow_liquid_ponds)
@@ -1525,6 +1531,7 @@ contains
 
        call MPAS_pool_get_array(mesh, "latCell", latCell)
        call MPAS_pool_get_array(mesh, "indexToCellID", indexToCellID)
+       call MPAS_pool_get_array(mesh, "itimestep", itimestep)
 
        call MPAS_pool_get_array(icestate, "iceAreaCellInitial", iceAreaCellInitial)
        call MPAS_pool_get_array(icestate, "iceAreaCategoryInitial", iceAreaCategoryInitial)
@@ -1732,7 +1739,7 @@ contains
 
           call colpkg_clear_warnings()
           call colpkg_step_therm1(&
-               config_dt, &
+               dt, &
                nCategories, &
                nIceLayers, &
                nSnowLayers, &
@@ -1871,7 +1878,7 @@ contains
              call mpas_log_write("column_vertical_thermodynamics: "//trim(abortMessage) , messageType=MPAS_LOG_ERR)
              call mpas_log_write("iCell: $i", messageType=MPAS_LOG_ERR, intArgs=(/indexToCellID(iCell)/))
 
-             call mpas_log_write("config_dt: $r", messageType=MPAS_LOG_ERR, realArgs=(/config_dt/))
+             call mpas_log_write("dt: $r", messageType=MPAS_LOG_ERR, realArgs=(/dt/))
              call mpas_log_write("nCategories: $i", messageType=MPAS_LOG_ERR, intArgs=(/nCategories/))
              call mpas_log_write("nIceLayers: $i", messageType=MPAS_LOG_ERR, intArgs=(/nIceLayers/))
              call mpas_log_write("nSnowLayers: $i", messageType=MPAS_LOG_ERR, intArgs=(/nSnowLayers/))
@@ -2081,7 +2088,7 @@ contains
 !
 !-----------------------------------------------------------------------
 
-  subroutine column_itd_thermodynamics(domain, clock)
+  subroutine column_itd_thermodynamics(domain, clock, dt)
 
     use ice_colpkg, only: &
          colpkg_step_therm2, &
@@ -2090,6 +2097,8 @@ contains
     type(domain_type), intent(inout) :: domain
 
     type(MPAS_clock_type), intent(in) :: clock
+
+    real(kind=RKIND), intent(in) :: dt
 
     type(block_type), pointer :: block
 
@@ -2109,9 +2118,6 @@ contains
          aerosols
 
     ! configs
-    real(kind=RKIND), pointer :: &
-         config_dt
-
     logical, pointer :: &
          config_update_ocean_fluxes, &
          config_use_column_biogeochemistry
@@ -2220,7 +2226,7 @@ contains
 
        call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
        call MPAS_pool_get_subpool(block % structs, "icestate", icestate)
-       call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+       call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
        call MPAS_pool_get_subpool(block % structs, "tracers_aggregate", tracers_aggregate)
        call MPAS_pool_get_subpool(block % structs, "atmos_coupling", atmos_coupling)
        call MPAS_pool_get_subpool(block % structs, "ocean_coupling", ocean_coupling)
@@ -2229,10 +2235,9 @@ contains
        call MPAS_pool_get_subpool(block % structs, "ponds", ponds)
        call MPAS_pool_get_subpool(block % structs, "biogeochemistry", biogeochemistry)
        call MPAS_pool_get_subpool(block % structs, "initial", initial)
-       call MPAS_pool_get_subpool(block % structs, "diagnostics", diagnostics)
+       call MPAS_pool_get_subpool(block % structs, "column_diagnostics", diagnostics)
        call MPAS_pool_get_subpool(block % structs, "aerosols", aerosols)
 
-       call MPAS_pool_get_config(block % configs, "config_dt", config_dt)
        call MPAS_pool_get_config(block % configs, "config_update_ocean_fluxes", config_update_ocean_fluxes)
        call MPAS_pool_get_config(block % configs, "config_use_column_biogeochemistry", config_use_column_biogeochemistry)
 
@@ -2344,7 +2349,7 @@ contains
 
           call colpkg_clear_warnings()
           call colpkg_step_therm2(&
-               config_dt, &
+               dt, &
                nCategories, &
                nAerosols, &
                ciceTracerObject % nBioTracers, & !nbtrcr, intent(in)
@@ -2414,7 +2419,7 @@ contains
             do iCategory = 1,nCategories
                totalCarbonFinal = totalCarbonFinal + totalCarbonCatFinal(iCategory)*iceAreaCategory(1,iCategory,iCell)
             enddo
-            carbonError = totalCarbonInitial - oceanCarbonFlux*config_dt - totalCarbonFinal
+            carbonError = totalCarbonInitial - oceanCarbonFlux*dt - totalCarbonFinal
 
             if (abs(carbonError) > 1.0e-14_RKIND*MAXVAL((/totalCarbonInitial,totalCarbonFinal/))) then
                   call mpas_log_write("column_step_therm2, carbon conservation error", messageType=MPAS_LOG_ERR)
@@ -2529,7 +2534,7 @@ contains
     do while (associated(block))
 
        call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
-       call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+       call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
        call MPAS_pool_get_subpool(block % structs, "tracers_aggregate", tracers_aggregate)
        call MPAS_pool_get_subpool(block % structs, "atmos_coupling", atmos_coupling)
        call MPAS_pool_get_subpool(block % structs, "shortwave", shortwave)
@@ -2612,7 +2617,7 @@ contains
 !
 !-----------------------------------------------------------------------
 
-  subroutine column_snow(domain)
+  subroutine column_snow(domain, dt)
 
     use ice_colpkg, only: &
          colpkg_step_snow, &
@@ -2623,6 +2628,8 @@ contains
          seaicePuny
 
     type(domain_type), intent(inout) :: domain
+
+    real(kind=RKIND), intent(in) :: dt
 
     type(block_type), pointer :: block
 
@@ -2675,7 +2682,6 @@ contains
          snowMeltMassCell
 
     real(kind=RKIND), pointer :: &
-         config_dt, &
          config_new_snow_density, &
          config_max_snow_density, &
          config_minimum_wind_compaction, &
@@ -2715,7 +2721,7 @@ contains
     do while (associated(block))
 
        call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
-       call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+       call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
        call MPAS_pool_get_subpool(block % structs, "tracers_aggregate", tracers_aggregate)
        call MPAS_pool_get_subpool(block % structs, "snow", snow)
        call MPAS_pool_get_subpool(block % structs, "atmos_forcing", atmos_forcing)
@@ -2724,7 +2730,6 @@ contains
 
        call MPAS_pool_get_config(block % configs, "config_use_effective_snow_density", config_use_effective_snow_density)
        call MPAS_pool_get_config(block % configs, "config_use_snow_grain_radius", config_use_snow_grain_radius)
-       call MPAS_pool_get_config(block % configs, "config_dt", config_dt)
        call MPAS_pool_get_config(block % configs, "config_new_snow_density", config_new_snow_density)
        call MPAS_pool_get_config(block % configs, "config_max_snow_density", config_max_snow_density)
        call MPAS_pool_get_config(block % configs, "config_minimum_wind_compaction", config_minimum_wind_compaction)
@@ -2787,7 +2792,7 @@ contains
 
           call colpkg_clear_warnings()
           call colpkg_step_snow (&
-               config_dt, &
+               dt, &
                windSpeed(iCell), &
                nIceLayers, &
                nSnowLayers, &
@@ -2855,7 +2860,7 @@ contains
 !
 !-----------------------------------------------------------------------
 
-  subroutine column_radiation(domain, clock, lInitialization)
+  subroutine column_radiation(domain, clock, dt, lInitialization)
 
     use ice_colpkg, only: &
          colpkg_step_radiation, &
@@ -2867,6 +2872,8 @@ contains
     type(domain_type), intent(inout) :: domain
 
     type(MPAS_clock_type), intent(in) :: clock
+
+    real(kind=RKIND), intent(in) :: dt
 
     logical, intent(in) :: &
          lInitialization
@@ -2885,9 +2892,6 @@ contains
          snow
 
     ! configs
-    real(kind=RKIND), pointer :: &
-         config_dt
-
     logical, pointer :: &
          config_use_shortwave_bioabsorption, &
          config_use_brine, &
@@ -3032,7 +3036,7 @@ contains
     do while (associated(block))
 
        call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
-       call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+       call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
        call MPAS_pool_get_subpool(block % structs, "atmos_coupling", atmos_coupling)
        call MPAS_pool_get_subpool(block % structs, "shortwave", shortwave)
        call MPAS_pool_get_subpool(block % structs, "ponds", ponds)
@@ -3041,7 +3045,6 @@ contains
        call MPAS_pool_get_subpool(block % structs, "snicar", snicar)
        call MPAS_pool_get_subpool(block % structs, "snow", snow)
 
-       call MPAS_pool_get_config(block % configs, "config_dt", config_dt)
        call MPAS_pool_get_config(block % configs, "config_snow_redistribution_scheme", config_snow_redistribution_scheme)
 
        call MPAS_pool_get_dimension(mesh, "nCellsSolve", nCellsSolve)
@@ -3172,11 +3175,11 @@ contains
 
           ! set the category tracer array
           call set_cice_tracer_array_category(block, ciceTracerObject, &
-                 tracerArrayCategory, iCell, setGetPhysicsTracers, setGetBGCTracers)
+               tracerArrayCategory, iCell, setGetPhysicsTracers, setGetBGCTracers)
 
           call colpkg_clear_warnings()
           call colpkg_step_radiation(&
-               config_dt, &
+               dt, &
                nCategories, &
                nAlgae, &
                nBioLayers, &
@@ -3290,13 +3293,23 @@ contains
 !
 !-----------------------------------------------------------------------
 
-  subroutine column_ridging(domain)
+  subroutine column_ridging(&
+       domain, &
+       dynamicsTimeStep, &
+       dynamicsSubcycleNumber)
 
     use ice_colpkg, only: &
          colpkg_step_ridge, &
          colpkg_clear_warnings
 
-    type(domain_type), intent(inout) :: domain
+    type(domain_type), intent(inout) :: &
+         domain
+
+    real(kind=RKIND), intent(in) :: &
+         dynamicsTimeStep
+
+    integer, intent(in) :: &
+         dynamicsSubcycleNumber
 
     type(block_type), pointer :: block
 
@@ -3317,12 +3330,6 @@ contains
     ! configs
     logical, pointer :: &
          config_use_column_biogeochemistry
-
-    real(kind=RKIND), pointer :: &
-         config_dt
-
-    integer, pointer :: &
-         config_dynamics_subcycle_number
 
     ! dimensions
     integer, pointer :: &
@@ -3375,9 +3382,6 @@ contains
     integer, dimension(:), pointer :: &
          indexToCellID
 
-    real(kind=RKIND), pointer :: &
-         dynamicsTimeStep
-
     ! local
     integer :: &
          iCell, &
@@ -3399,7 +3403,7 @@ contains
     do while (associated(block))
 
        call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
-       call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+       call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
        call MPAS_pool_get_subpool(block % structs, "tracers_aggregate", tracers_aggregate)
        call MPAS_pool_get_subpool(block % structs, "icestate", icestate)
        call MPAS_pool_get_subpool(block % structs, "ponds", ponds)
@@ -3408,13 +3412,9 @@ contains
        call MPAS_pool_get_subpool(block % structs, "aerosols", aerosols)
        call MPAS_pool_get_subpool(block % structs, "biogeochemistry", biogeochemistry)
        call MPAS_pool_get_subpool(block % structs, "initial", initial)
-       call MPAS_pool_get_subpool(block % structs, "velocity_solver", velocity_solver)
        call MPAS_pool_get_subpool(block % structs, "ocean_coupling", ocean_coupling)
 
-       call MPAS_pool_get_config(block % configs, "config_dynamics_subcycle_number", config_dynamics_subcycle_number)
        call MPAS_pool_get_config(block % configs, "config_use_column_biogeochemistry", config_use_column_biogeochemistry)
-
-       call MPAS_pool_get_array(velocity_solver, "dynamicsTimeStep", dynamicsTimeStep)
 
        call MPAS_pool_get_dimension(mesh, "nCellsSolve", nCellsSolve)
        call MPAS_pool_get_dimension(mesh, "nCategories", nCategories)
@@ -3489,7 +3489,7 @@ contains
           call colpkg_clear_warnings()
           call colpkg_step_ridge(&
                dynamicsTimeStep, &
-               config_dynamics_subcycle_number, &
+               dynamicsSubcycleNumber, &
                nIceLayers, &
                nSnowLayers, &
                nBioLayers, &
@@ -3577,7 +3577,7 @@ contains
 !
 !-----------------------------------------------------------------------
 
-  subroutine column_biogeochemistry(domain)
+  subroutine column_biogeochemistry(domain, dt)
 
     use ice_colpkg, only: &
          colpkg_biogeochemistry, &
@@ -3588,6 +3588,8 @@ contains
          seaicePuny
 
     type(domain_type), intent(inout) :: domain
+
+    real(kind=RKIND), intent(in) :: dt
 
     type(block_type), pointer :: block
 
@@ -3604,9 +3606,6 @@ contains
          initial
 
     ! configs
-    real(kind=RKIND), pointer :: &
-         config_dt
-
     logical, pointer :: &
          config_use_brine, &
          config_use_skeletal_biochemistry, &
@@ -3789,7 +3788,7 @@ contains
 
        call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
        call MPAS_pool_get_subpool(block % structs, "icestate", icestate)
-       call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+       call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
        call MPAS_pool_get_subpool(block % structs, "biogeochemistry", biogeochemistry)
        call MPAS_pool_get_subpool(block % structs, "diagnostics_biogeochemistry", diagnostics_biogeochemistry)
        call MPAS_pool_get_subpool(block % structs, "shortwave", shortwave)
@@ -3823,7 +3822,6 @@ contains
 
        call MPAS_pool_get_array(mesh, "indexToCellID", indexToCellID)
 
-       call MPAS_pool_get_config(block % configs, "config_dt", config_dt)
        call MPAS_pool_get_config(block % configs, "config_use_brine", config_use_brine)
        call MPAS_pool_get_config(block % configs, "config_use_skeletal_biochemistry", config_use_skeletal_biochemistry)
        call MPAS_pool_get_config(block % configs, "config_use_column_biogeochemistry", config_use_column_biogeochemistry)
@@ -3999,7 +3997,7 @@ contains
 
           call colpkg_clear_warnings()
           call colpkg_biogeochemistry(&
-               config_dt, &
+               dt, &
                ciceTracerObject % nTracers, &
                ciceTracerObject % nBioTracers, &
                netNitrateUptake(iCell), &
@@ -4087,7 +4085,7 @@ contains
             do iCategory = 1,nCategories
                brineHeightCatFinal(iCategory) = brineFraction(1,iCategory,iCell) * &
                    iceVolumeCategory(1,iCategory,iCell)/(iceAreaCategory(1,iCategory,iCell) + seaicePuny)
-               carbonErrorCat = totalCarbonCatInitial(iCategory) - totalCarbonCatFlux(iCategory)*config_dt - &
+               carbonErrorCat = totalCarbonCatInitial(iCategory) - totalCarbonCatFlux(iCategory)*dt - &
                    totalCarbonCatFinal(iCategory)
                if (abs(carbonErrorCat) > accuracy*MAXVAL((/totalCarbonCatInitial(iCategory),totalCarbonCatFinal(iCategory)/))) then
 !                  abortFlag = .true.
@@ -4288,118 +4286,6 @@ contains
 
 !|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 !
-!  seaice_column_update_state
-!
-!> \brief
-!> \author Adrian K. Turner, LANL
-!> \date 31st March 2015
-!> \details
-!>
-!
-!-----------------------------------------------------------------------
-
-  subroutine seaice_column_update_state(domain, stateUpdateType, dt, iceAgeTimeOffset)
-
-    type(domain_type), intent(inout) :: domain
-
-    character(len=*), intent(in) :: &
-         stateUpdateType
-
-    real(kind=RKIND), intent(in) :: &
-         dt, &
-         iceAgeTimeOffset
-
-    type(block_type), pointer :: block
-
-    type(MPAS_pool_type), pointer :: &
-         tracers_aggregate, &
-         diagnostics
-
-    real(kind=RKIND), dimension(:), pointer :: &
-         iceAreaCell, &
-         iceVolumeCell, &
-         iceAgeCell, &
-         iceAreaTendency, &
-         iceVolumeTendency, &
-         iceAgeTendency
-
-    integer, pointer :: &
-         nCellsSolve
-
-    integer :: &
-         iCell
-
-    logical, pointer :: &
-         config_use_ice_age
-
-    ! aggregate state variables
-    call mpas_timer_start("Column aggregate")
-    call seaice_column_aggregate(domain)
-    call mpas_timer_stop("Column aggregate")
-
-    ! get configs
-    call MPAS_pool_get_config(domain % blocklist % configs, "config_use_ice_age", config_use_ice_age)
-
-    ! compute thermodynamic area and volume tendencies
-    block => domain % blocklist
-    do while (associated(block))
-
-       call MPAS_pool_get_subpool(block % structs, "tracers_aggregate", tracers_aggregate)
-       call MPAS_pool_get_subpool(block % structs, "diagnostics", diagnostics)
-
-       call MPAS_pool_get_dimension(tracers_aggregate, "nCellsSolve", nCellsSolve)
-
-       call MPAS_pool_get_array(tracers_aggregate, "iceAreaCell", iceAreaCell)
-       call MPAS_pool_get_array(tracers_aggregate, "iceVolumeCell", iceVolumeCell)
-       call MPAS_pool_get_array(tracers_aggregate, "iceAgeCell", iceAgeCell)
-
-       if (trim(stateUpdateType) == "transport") then
-
-          call MPAS_pool_get_array(diagnostics, "iceAreaTendencyTransport", iceAreaTendency)
-          call MPAS_pool_get_array(diagnostics, "iceVolumeTendencyTransport", iceVolumeTendency)
-          call MPAS_pool_get_array(diagnostics, "iceAgeTendencyTransport", iceAgeTendency)
-
-       else if (trim(stateUpdateType) == "thermodynamics") then
-
-          call MPAS_pool_get_array(diagnostics, "iceAreaTendencyThermodynamics", iceAreaTendency)
-          call MPAS_pool_get_array(diagnostics, "iceVolumeTendencyThermodynamics", iceVolumeTendency)
-          call MPAS_pool_get_array(diagnostics, "iceAgeTendencyThermodynamics", iceAgeTendency)
-
-       else
-
-          call mpas_log_write("seaice_column_update_state: Unknown update type: "//trim(stateUpdateType), messageType=MPAS_LOG_CRIT)
-
-       endif
-
-       do iCell = 1, nCellsSolve
-
-          iceAreaTendency(iCell)   = (iceAreaCell(iCell)   - iceAreaTendency(iCell))   / dt
-          iceVolumeTendency(iCell) = (iceVolumeCell(iCell) - iceVolumeTendency(iCell)) / dt
-
-          if (config_use_ice_age) then
-             if (iceAgeTimeOffset > 0.0_RKIND) then
-
-                if (iceAgeCell(iCell) > 0.0_RKIND) &
-                     iceAgeTendency(iCell) = &
-                          (iceAgeCell(iCell) - iceAgeTendency(iCell) - iceAgeTimeOffset) / dt
-
-             else
-
-                iceAgeTendency(iCell) = &
-                     (iceAgeCell(iCell) - iceAgeTendency(iCell)) / dt
-
-             endif
-          endif
-
-       enddo ! iCell
-
-       block => block % next
-    enddo
-
-  end subroutine seaice_column_update_state
-
-!|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-!
 !  seaice_column_aggregate
 !
 !> \brief
@@ -4455,7 +4341,7 @@ contains
     do while (associated(block))
 
        call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
-       call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+       call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
        call MPAS_pool_get_subpool(block % structs, "icestate", icestate)
        call MPAS_pool_get_subpool(block % structs, "tracers_aggregate", tracers_aggregate)
        call MPAS_pool_get_subpool(block % structs, "ocean_coupling", ocean_coupling)
@@ -4562,7 +4448,7 @@ contains
     do while (associated(block))
 
        call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
-       call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+       call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
        call MPAS_pool_get_subpool(block % structs, "icestate", icestate)
        call MPAS_pool_get_subpool(block % structs, "tracers_aggregate", tracers_aggregate)
 
@@ -4612,13 +4498,15 @@ contains
 !
 !-----------------------------------------------------------------------
 
-  subroutine seaice_column_coupling_prep(domain)
+  subroutine seaice_column_coupling_prep(domain, dt)
 
     use seaice_constants, only: &
          seaicePuny, &
          seaiceDensityFreshwater
 
     type(domain_type) :: domain
+
+    real(kind=RKIND), intent(in) :: dt
 
     type(block_type), pointer :: block
 
@@ -4699,9 +4587,6 @@ contains
          iceAreaCategory
 
     real(kind=RKIND), pointer :: &
-         config_dt
-
-    real(kind=RKIND), pointer :: &
          config_ratio_C_to_N_diatoms, &
          config_ratio_C_to_N_small_plankton, &
          config_ratio_C_to_N_phaeocystis, &
@@ -4733,7 +4618,6 @@ contains
          oceanBioFluxesAll
 
     call MPAS_pool_get_config(domain % configs, "config_use_ocean_mixed_layer", config_use_ocean_mixed_layer)
-    call MPAS_pool_get_config(domain % configs, "config_dt", config_dt)
     call MPAS_pool_get_config(domain % configs, "config_include_pond_freshwater_feedback", config_include_pond_freshwater_feedback)
     call MPAS_pool_get_config(domain % configs, "config_use_column_biogeochemistry", config_use_column_biogeochemistry)
     call MPAS_pool_get_config(domain % configs, "config_ratio_C_to_N_diatoms", config_ratio_C_to_N_diatoms)
@@ -4742,14 +4626,14 @@ contains
     call MPAS_pool_get_config(domain % configs, "config_ratio_C_to_N_proteins", config_ratio_C_to_N_proteins)
 
     if (config_use_ocean_mixed_layer) &
-         call seaice_column_ocean_mixed_layer(domain)
+         call seaice_column_ocean_mixed_layer(domain, dt)
 
     block => domain % blocklist
     do while (associated(block))
 
        call MPAS_pool_get_subpool(block % structs, "ocean_coupling", oceanCoupling)
-       call MPAS_pool_get_subpool(block % structs, "diagnostics", diagnostics)
-       call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+       call MPAS_pool_get_subpool(block % structs, "column_diagnostics", diagnostics)
+       call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
        call MPAS_pool_get_subpool(block % structs, "shortwave", shortwave)
        call MPAS_pool_get_subpool(block % structs, "atmos_coupling", atmosCoupling)
        call MPAS_pool_get_subpool(block % structs, "ponds", ponds)
@@ -4898,7 +4782,7 @@ contains
           !-------------------------------------------------------------------
 
           if (config_include_pond_freshwater_feedback) then
-             pondFreshWaterFlux(iCell)  = pondFreshWaterFlux(iCell) * seaiceDensityFreshwater / config_dt
+             pondFreshWaterFlux(iCell)  = pondFreshWaterFlux(iCell) * seaiceDensityFreshwater / dt
              oceanFreshWaterFlux(iCell) = oceanFreshWaterFlux(iCell) - pondFreshWaterFlux(iCell)
           endif
 
@@ -5333,7 +5217,7 @@ contains
 !
 !-----------------------------------------------------------------------
 
-  subroutine seaice_column_ocean_mixed_layer(domain)
+  subroutine seaice_column_ocean_mixed_layer(domain, dt)
 
     use ice_colpkg, only: &
          colpkg_atm_boundary, &
@@ -5343,6 +5227,8 @@ contains
          seaiceOceanAlbedo
 
     type(domain_type) :: domain
+
+    real(kind=RKIND), intent(in) :: dt
 
     type(block_type), pointer :: block
 
@@ -5397,9 +5283,6 @@ contains
          potentialTemperatureDifference, &
          specificHumidityDifference
 
-    real(kind=RKIND), pointer :: &
-         config_dt
-
     integer :: &
          iCell
 
@@ -5407,12 +5290,10 @@ contains
          nCellsSolve
 
     integer, dimension(:), pointer :: &
-           landIceMask
+         landIceMask
 
     logical, pointer :: &
          config_use_test_ice_shelf
-
-    call MPAS_pool_get_config(domain % configs, "config_dt", config_dt)
 
     block => domain % blocklist
     do while (associated(block))
@@ -5469,6 +5350,7 @@ contains
        call MPAS_pool_get_array(oceanAtmosphere, "evaporativeWaterFluxOcean", evaporativeWaterFluxOcean)
 
        do iCell = 1, nCellsSolve
+
           call colpkg_atm_boundary(&
                'ocn', &
                seaSurfaceTemperature(iCell), &
@@ -5521,7 +5403,7 @@ contains
                seaFreezingTemperature(iCell), &
                oceanHeatFluxConvergence(iCell), &
                freezingMeltingPotential(iCell), &
-               config_dt)
+               dt)
 
        enddo ! iCell
 
@@ -6613,7 +6495,7 @@ contains
     call MPAS_pool_get_dimension(block % dimensions, "nSnowLayers", nSnowLayers)
     call MPAS_pool_get_dimension(block % dimensions, "nAerosols", nAerosols)
 
-    call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+    call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
 
     call MPAS_pool_get_array(tracers, "surfaceTemperature", surfaceTemperature, 1)
     call MPAS_pool_get_array(tracers, "iceEnthalpy", iceEnthalpy, 1)
@@ -6802,7 +6684,7 @@ contains
     call MPAS_pool_get_dimension(block % dimensions, "nSnowLayers", nSnowLayers)
     call MPAS_pool_get_dimension(block % dimensions, "nAerosols", nAerosols)
 
-    call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+    call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
 
     call MPAS_pool_get_array(tracers, "surfaceTemperature", surfaceTemperature, 1)
     call MPAS_pool_get_array(tracers, "iceEnthalpy", iceEnthalpy, 1)
@@ -7411,7 +7293,7 @@ contains
     call MPAS_pool_get_dimension(block % dimensions, "nParticulateIron", nParticulateIron)
     call MPAS_pool_get_dimension(block % dimensions, "nDissolvedIron", nDissolvedIron)
 
-    call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+    call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
 
     call MPAS_pool_get_array(tracers, "skeletalAlgaeConc", skeletalAlgaeConc, 1)
     call MPAS_pool_get_array(tracers, "skeletalDOCConc", skeletalDOCConc, 1)
@@ -7783,7 +7665,7 @@ contains
     call MPAS_pool_get_dimension(block % dimensions, "nParticulateIron", nParticulateIron)
     call MPAS_pool_get_dimension(block % dimensions, "nDissolvedIron", nDissolvedIron)
 
-    call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+    call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
 
     call MPAS_pool_get_array(tracers, "skeletalAlgaeConc", skeletalAlgaeConc, 1)
     call MPAS_pool_get_array(tracers, "skeletalDOCConc", skeletalDOCConc, 1)
@@ -12262,7 +12144,7 @@ contains
          tracerArray, &
          iceAreaCategory
 
-    call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+    call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
 
     call MPAS_pool_get_field(tracers, trim(tracerName), tracerArray, 1)
     call MPAS_pool_get_field(tracers, "iceAreaCategory", iceAreaCategory, 1)
@@ -12297,7 +12179,7 @@ contains
          tracerArray, &
          iceAreaCategory
 
-    call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+    call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
 
     call MPAS_pool_get_field(tracers, trim(tracerName), tracerArray, 1)
 
@@ -13113,7 +12995,7 @@ contains
 !
 !-----------------------------------------------------------------------
 
-  subroutine init_column_biogeochemistry_profiles(domain, tracerObject)
+  subroutine init_column_biogeochemistry_profiles(domain, dt, tracerObject)
 
     use ice_colpkg, only: &
          colpkg_init_bgc, &
@@ -13121,6 +13003,8 @@ contains
          colpkg_init_zsalinity
 
     type(domain_type), intent(inout) :: domain
+
+    real(kind=RKIND), intent(in) :: dt
 
     type(ciceTracerObjectType), intent(inout) :: &
          tracerObject
@@ -13145,7 +13029,6 @@ contains
          config_use_macromolecules
 
     real(kind=RKIND), pointer :: &
-         config_dt, &
          config_snow_porosity_at_ice_surface
 
     real(kind=RKIND), dimension(:), pointer :: &
@@ -13224,7 +13107,6 @@ contains
     call MPAS_pool_get_config(domain % configs, "config_use_vertical_zsalinity", config_use_vertical_zsalinity)
     call MPAS_pool_get_config(domain % configs, "config_use_skeletal_biochemistry", config_use_skeletal_biochemistry)
     call MPAS_pool_get_config(domain % configs, "config_use_vertical_tracers", config_use_vertical_tracers)
-    call MPAS_pool_get_config(domain % configs, "config_dt", config_dt)
     call MPAS_pool_get_config(domain % configs, "config_snow_porosity_at_ice_surface", config_snow_porosity_at_ice_surface)
     call MPAS_pool_get_config(domain % configs, "config_use_macromolecules", config_use_macromolecules)
 
@@ -13272,7 +13154,7 @@ contains
        call MPAS_pool_get_subpool(block % structs, "ocean_coupling", ocean_coupling)
        call MPAS_pool_get_array(ocean_coupling, "seaSurfaceSalinity", seaSurfaceSalinity)
 
-       call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+       call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
        call MPAS_pool_get_array(tracers, "iceSalinity", iceSalinity, 1)
        call MPAS_pool_get_array(tracers, "brineFraction", brineFraction, 1)
 
@@ -13333,7 +13215,7 @@ contains
 
           if (config_use_vertical_tracers .or. config_use_skeletal_biochemistry) then
              call colpkg_init_bgc(&
-                  config_dt, &
+                  dt, &
                   nCategories, &
                   nBioLayers, &
                   nIceLayers, &
@@ -13556,7 +13438,7 @@ contains
           ! tendancies
           call MPAS_pool_get_config(block % configs, "config_use_ice_age", config_use_ice_age)
 
-          call MPAS_pool_get_subpool(block % structs, "diagnostics", diagnosticsPool)
+          call MPAS_pool_get_subpool(block % structs, "column_diagnostics", diagnosticsPool)
           call MPAS_pool_get_subpool(block % structs, "tracers_aggregate", tracersAggregatePool)
 
           call MPAS_pool_get_array(diagnosticsPool, "iceAreaTendencyThermodynamics", iceAreaTendencyThermodynamics)
@@ -13697,33 +13579,7 @@ contains
     type(block_type), pointer :: block
 
     type(MPAS_pool_type), pointer :: &
-         velocitySolverPool, &
-         velocityWeakPool, &
-         velocityVariationalPool, &
-         ridgingPool, &
-         diagnosticsPool, &
-         tracersAggregatePool
-
-    ! dynamics
-    real(kind=RKIND), dimension(:), pointer :: &
-         oceanStressU, &
-         oceanStressV, &
-         airStressVertexU, &
-         airStressVertexV, &
-         stressDivergenceU, &
-         stressDivergenceV, &
-         surfaceTiltForceU, &
-         surfaceTiltForceV
-
-    real(kind=RKIND), dimension(:,:), pointer :: &
-         principalStress1Var, &
-         principalStress2Var, &
-         replacementPressureVar
-
-    real(kind=RKIND), dimension(:), pointer :: &
-         principalStress1Weak, &
-         principalStress2Weak, &
-         replacementPressureWeak
+         ridgingPool
 
     ! ridging
     real(kind=RKIND), dimension(:), pointer :: &
@@ -13732,77 +13588,14 @@ contains
          iceVolumeRidged, &
          openingRateRidge
 
-    ! diagnostic tendencies
-    real(kind=RKIND), dimension(:), pointer :: &
-         iceAreaTendencyTransport, &
-         iceVolumeTendencyTransport, &
-         iceAgeTendencyTransport, &
-         iceAreaCell, &
-         iceVolumeCell, &
-         iceAgeCell
-
     logical, pointer :: &
-         config_use_ice_age, &
-         config_use_column_package, &
-         config_use_velocity_solver
+         config_use_column_package
 
-    character(len=strKIND), pointer :: &
-         config_stress_divergence_scheme
-
-    call MPAS_pool_get_config(domain % blocklist % configs, "config_use_column_package", config_use_column_package)
-    call MPAS_pool_get_config(domain % blocklist % configs, "config_use_velocity_solver", config_use_velocity_solver)
-    call MPAS_pool_get_config(domain % blocklist % configs, "config_stress_divergence_scheme", config_stress_divergence_scheme)
-
+    call MPAS_pool_get_config(domain % configs, "config_use_column_package", config_use_column_package)
     if (config_use_column_package) then
 
        block => domain % blocklist
        do while (associated(block))
-
-          call MPAS_pool_get_subpool(block % structs, "velocity_solver", velocitySolverPool)
-
-          call MPAS_pool_get_array(velocitySolverPool, "oceanStressU", oceanStressU)
-          call MPAS_pool_get_array(velocitySolverPool, "oceanStressV", oceanStressV)
-          call MPAS_pool_get_array(velocitySolverPool, "airStressVertexU", airStressVertexU)
-          call MPAS_pool_get_array(velocitySolverPool, "airStressVertexV", airStressVertexV)
-          call MPAS_pool_get_array(velocitySolverPool, "stressDivergenceU", stressDivergenceU)
-          call MPAS_pool_get_array(velocitySolverPool, "stressDivergenceV", stressDivergenceV)
-          call MPAS_pool_get_array(velocitySolverPool, "surfaceTiltForceU", surfaceTiltForceU)
-          call MPAS_pool_get_array(velocitySolverPool, "surfaceTiltForceV", surfaceTiltForceV)
-
-          oceanStressU        = 0.0_RKIND
-          oceanStressV        = 0.0_RKIND
-          airStressVertexU    = 0.0_RKIND
-          airStressVertexV    = 0.0_RKIND
-          stressDivergenceU   = 0.0_RKIND
-          stressDivergenceV   = 0.0_RKIND
-          surfaceTiltForceU   = 0.0_RKIND
-          surfaceTiltForceV   = 0.0_RKIND
-
-          if (config_use_velocity_solver .and. trim(config_stress_divergence_scheme) == "weak") then
-
-             call MPAS_pool_get_subpool(block % structs, "velocity_weak", velocityWeakPool)
-
-             call MPAS_pool_get_array(velocityWeakPool, "principalStress1", principalStress1Weak)
-             call MPAS_pool_get_array(velocityWeakPool, "principalStress2", principalStress2Weak)
-             call MPAS_pool_get_array(velocityWeakPool, "replacementPressure", replacementPressureWeak)
-
-             principalStress1Weak    = 0.0_RKIND
-             principalStress2Weak    = 0.0_RKIND
-             replacementPressureWeak = 0.0_RKIND
-
-          else if (config_use_velocity_solver .and. trim(config_stress_divergence_scheme) == "variational") then
-
-             call MPAS_pool_get_subpool(block % structs, "velocity_variational", velocityVariationalPool)
-
-             call MPAS_pool_get_array(velocityVariationalPool, "principalStress1", principalStress1Var)
-             call MPAS_pool_get_array(velocityVariationalPool, "principalStress2", principalStress2Var)
-             call MPAS_pool_get_array(velocityVariationalPool, "replacementPressure", replacementPressureVar)
-
-             principalStress1Var    = 0.0_RKIND
-             principalStress2Var    = 0.0_RKIND
-             replacementPressureVar = 0.0_RKIND
-
-          endif
 
           call MPAS_pool_get_subpool(block % structs, "ridging", ridgingPool)
 
@@ -13815,29 +13608,6 @@ contains
           areaGainRidge    = 0.0_RKIND
           iceVolumeRidged  = 0.0_RKIND
           openingRateRidge = 0.0_RKIND
-
-          ! tendancies
-          call MPAS_pool_get_config(block % configs, "config_use_ice_age", config_use_ice_age)
-
-          call MPAS_pool_get_subpool(block % structs, "diagnostics", diagnosticsPool)
-          call MPAS_pool_get_subpool(block % structs, "tracers_aggregate", tracersAggregatePool)
-
-          call MPAS_pool_get_array(diagnosticsPool, "iceAreaTendencyTransport", iceAreaTendencyTransport)
-          call MPAS_pool_get_array(diagnosticsPool, "iceVolumeTendencyTransport", iceVolumeTendencyTransport)
-          call MPAS_pool_get_array(diagnosticsPool, "iceAgeTendencyTransport", iceAgeTendencyTransport)
-
-          call MPAS_pool_get_array(tracersAggregatePool, "iceAreaCell", iceAreaCell)
-          call MPAS_pool_get_array(tracersAggregatePool, "iceVolumeCell", iceVolumeCell)
-          call MPAS_pool_get_array(tracersAggregatePool, "iceAgeCell", iceAgeCell)
-
-          ! transport tendencies
-          iceAreaTendencyTransport   = iceAreaCell
-          iceVolumeTendencyTransport = iceVolumeCell
-          if (config_use_ice_age) then
-             iceAgeTendencyTransport = iceAgeCell
-          else
-             iceAgeTendencyTransport = 0.0_RKIND
-          endif
 
           block => block % next
        end do
@@ -14101,7 +13871,7 @@ contains
        call MPAS_pool_get_config(block % configs, "config_use_zaerosols",config_use_zaerosols)
 
        call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
-       call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+       call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
 
        call MPAS_pool_get_dimension(mesh, "nCellsSolve", nCellsSolve)
        call MPAS_pool_get_dimension(mesh, "nCategories", nCategories)
@@ -14496,7 +14266,7 @@ contains
        call MPAS_pool_get_config(block % configs, "config_use_zaerosols",config_use_zaerosols)
 
        call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
-       call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+       call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
 
        call MPAS_pool_get_dimension(mesh, "nCellsSolve", nCellsSolve)
        call MPAS_pool_get_dimension(mesh, "nCategories", nCategories)
@@ -15216,7 +14986,7 @@ contains
     call MPAS_pool_get_dimension(block % dimensions, "nDIC", nDIC)
     call MPAS_pool_get_dimension(block % dimensions, "nDON", nDON)
 
-    call MPAS_pool_get_subpool(block % structs, "tracers", tracers)
+    call MPAS_pool_get_subpool(block % structs, "seaice_tracers", tracers)
     call MPAS_pool_get_subpool(block % structs, "biogeochemistry", biogeochemistry)
     call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
 

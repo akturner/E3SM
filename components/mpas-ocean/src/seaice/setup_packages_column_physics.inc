@@ -1,0 +1,1 @@
+../../../mpas-seaice/src/model_forward/setup_packages_column_physics.inc

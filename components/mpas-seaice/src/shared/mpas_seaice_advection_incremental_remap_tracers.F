@@ -707,7 +707,7 @@ contains
     tracer => tracersHead
     do while (associated(tracer))
 
-       call MPAS_pool_get_subpool(domain % blocklist % structs, 'tracers', tracerPool)
+       call MPAS_pool_get_subpool(domain % blocklist % structs, 'seaice_tracers', tracerPool)
 
        call MPAS_pool_get_field_info(tracerPool, trim(tracer % tracerName), fieldInfo)
 
@@ -749,7 +749,7 @@ contains
 
     logical :: first ! initially true; set to false after the first active tracer is found
 
-    call MPAS_pool_get_subpool(domain % blocklist % structs, 'tracers', tracerPool)
+    call MPAS_pool_get_subpool(domain % blocklist % structs, 'seaice_tracers', tracerPool)
 
     ! loop over the tracers in the linked list, and identify the active tracers
     tracer => tracersHead
@@ -975,7 +975,7 @@ contains
        timeLevel = 1
     endif
 
-    call MPAS_pool_get_subpool(block % structs, 'tracers', tracerPool)
+    call MPAS_pool_get_subpool(block % structs, 'seaice_tracers', tracerPool)
     call MPAS_pool_get_subpool(block % structs, 'tracer_masks', tracerMaskPool)
     call MPAS_pool_get_subpool(block % structs, 'tracer_edge_fluxes', tracerEdgeFluxPool)
     call MPAS_pool_get_subpool(block % structs, 'tracer_products', tracerProductPool)
