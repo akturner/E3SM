@@ -1491,9 +1491,6 @@ contains
     real(kind=RKIND) :: &
          dayOfYear
 
-    integer, dimension(:), pointer :: &
-         itimestep
-
     ! day of year
     call get_day_of_year(clock, dayOfYear)
 
@@ -1531,7 +1528,6 @@ contains
 
        call MPAS_pool_get_array(mesh, "latCell", latCell)
        call MPAS_pool_get_array(mesh, "indexToCellID", indexToCellID)
-       call MPAS_pool_get_array(mesh, "itimestep", itimestep)
 
        call MPAS_pool_get_array(icestate, "iceAreaCellInitial", iceAreaCellInitial)
        call MPAS_pool_get_array(icestate, "iceAreaCategoryInitial", iceAreaCategoryInitial)

@@ -65,6 +65,11 @@ contains
       call init_land_ice_forcing(domain)
     endif
 
+    ! init surface flux forcing
+    if (config_use_time_varying_surface_flux_forcing) then
+      call init_surface_flux_forcing(domain)
+    endif
+
     ! init other forcings, to be added later as needed
     !if (config_use_time_varying_****_forcing) then
     !  call init_****_forcing(domain)
@@ -216,6 +221,14 @@ contains
              streamManager, &
              domain, &
              simulationClock)
+
+    endif
+
+    if (config_use_time_varying_surface_flux_forcing) then
+
+        call surface_flux_forcing(&
+             streamManager, &
+             domain)
 
     endif
 
@@ -413,7 +426,8 @@ contains
   end subroutine ocn_time_varying_forcing_write_restart_times!}}}
 
 !-----------------------------------------------------------------------
-
+! land ice forcing
+!-----------------------------------------------------------------------
 !|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 !
 !  init_land_ice_forcing
@@ -521,27 +535,153 @@ contains
        call MPAS_pool_get_subpool(block % structs, "mesh", mesh)
        call MPAS_pool_get_subpool(block % structs, "forcing", forcingPool)
        call MPAS_pool_get_subpool(block % structs, "timeVaryingForcing", timeVaryingForcingPool)
-   
+
        call MPAS_pool_get_dimension(mesh, "nCells", nCells)
-   
+
        call MPAS_pool_get_array(timeVaryingForcingPool, "landIceFractionForcing", landIceFractionForcing)
        call MPAS_pool_get_array(timeVaryingForcingPool, "landIcePressureForcing", landIcePressureForcing)
        call MPAS_pool_get_array(timeVaryingForcingPool, "landIceDraftForcing", landIceDraftForcing)
        call MPAS_pool_get_array(forcingPool, "landIceFraction", landIceFraction)
        call MPAS_pool_get_array(forcingPool, "landIcePressure", landIcePressure)
        call MPAS_pool_get_array(forcingPool, "landIceDraft", landIceDraft)
-   
+
        do iCell = 1, nCells
-   
+
           landIceFraction(iCell) = landIceFractionForcing(iCell)
           landIcePressure(iCell) = landIcePressureForcing(iCell)
           landIceDraft(iCell) = landIceDraftForcing(iCell)
-   
+
        enddo
        block => block % next
     end do
 
   end subroutine land_ice_forcing!}}}
+
+!-----------------------------------------------------------------------
+! surface flux forcing
+!-----------------------------------------------------------------------
+!|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+!
+!  init_surface_flux_forcing
+!
+!> \brief Initialize the forcing objects for wind and pressure
+!> \author Steven Brus, LANL
+!> \date 1/8/2019
+!> \details
+!>  This routine calls the MPAS_forcing module subroutines that initializes
+!>  the forcings type
+!
+!-----------------------------------------------------------------------
+
+  subroutine init_surface_flux_forcing(domain)!{{{
+
+    type(domain_type) :: domain
+
+    integer, parameter :: &
+         nFluxFields = 17
+
+    character(len=strKIND), dimension(nFluxFields), parameter :: &
+         fluxFieldName = (/&
+           ! heat flux
+           "latentHeatFlux       ", &
+           "sensibleHeatFlux     ", &
+           "longWaveHeatFluxUp   ", &
+           "longWaveHeatFluxDown ", &
+           "seaIceHeatFlux       ", &
+           "icebergHeatFlux      ", &
+           "shortWaveHeatFlux    ", &
+           ! mass flux
+           "rainFlux             ", &
+           "snowFlux             ", &
+           "iceRunoffFlux        ", &
+           "evaporationFlux      ", &
+           "seaIceFreshWaterFlux ", &
+           "icebergFreshWaterFlux", &
+           "riverRunoffFlux      ", &
+           ! salinity flux
+           "seaIceSalinityFlux   ", &
+           ! momentum flux
+           "windStressZonal      ", &
+           "windStressMeridional "/)
+
+    integer :: &
+         iFluxField
+
+    ! create the atmospheric forcing group
+    call MPAS_forcing_init_group(&
+         forcingGroupHead, &                     ! forcingGroupHead
+         "ocn_surface_flux_forcing", &           ! forcingGroupName
+         domain, &                               ! domain
+         config_time_varying_surface_flux_forcing_start_time, &            ! startTimeStr
+         config_time_varying_surface_flux_forcing_cycle_start, &           ! forcingCycleStart
+         config_time_varying_surface_flux_forcing_cycle_duration, &        ! forcingCycleDuration
+         config_do_restart)!, &                  ! restart
+         !.false.)                               ! forcingCycleStartInclusive
+
+    ! loop over flux fields adding them to forcing group
+    do iFluxField = 1, nFluxFields
+
+       !  init
+       call MPAS_forcing_init_field(&
+            domain % streamManager, &               ! streamManager
+            forcingGroupHead, &                     ! forcingGroupHead
+            "ocn_surface_flux_forcing", &           ! forcingGroupName
+            trim(fluxFieldName(iFluxField)), &      ! forcingName
+            "surface_flux_forcing", &               ! forcingStreamID
+            "forcing", &                            ! poolname
+            trim(fluxFieldName(iFluxField)), &      ! fieldname
+            "linear", &                             ! interpolationType
+            config_time_varying_surface_flux_forcing_reference_time, & ! forcingReferenceTimeStr
+            config_time_varying_surface_flux_forcing_interval)!,       ! forcingIntervalStr
+            !"next")                                ! forcingInitializationType
+
+    end do ! iFluxField
+
+    call MPAS_forcing_init_field_data(&
+         forcingGroupHead, &                     ! forcingGroupHead
+         "ocn_surface_flux_forcing", &           ! forcingGroupName
+         domain % streamManager, &               ! streamManager
+         config_do_restart, &                    ! restart
+         .false.)                                ! interpolateAtInit
+
+  end subroutine init_surface_flux_forcing!}}}
+
+!|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+!
+!  surface_flux_forcing
+!
+!> \brief
+!> \author Steven Brus, LANL
+!> \date 1/8/2019
+!> \details
+!>
+!
+!-----------------------------------------------------------------------
+
+  subroutine surface_flux_forcing(streamManager, domain)!{{{
+
+    type (MPAS_streamManager_type), intent(inout) :: streamManager
+
+    type (domain_type) :: domain
+
+    type (MPAS_timeInterval_type) :: timeStepESMF
+
+    real (kind=RKIND) :: dtSim
+
+    integer :: err
+
+    ! convert config_dt to real
+    call mpas_set_timeInterval(timeStepESMF, timeString=config_dt,ierr=err)
+    call mpas_get_timeInterval(timeStepESMF, dt=dtSim)
+
+    ! use the forcing layer to get data
+    call MPAS_forcing_get_forcing(&
+         forcingGroupHead, &               ! forcingGroupHead
+         "ocn_surface_flux_forcing", &     ! forcingGroupName
+         streamManager, &                  ! streamManager
+         dtSim)                            ! dt
+
+  end subroutine surface_flux_forcing!}}}
 
 end module ocn_time_varying_forcing
 ! vim: foldmethod=marker

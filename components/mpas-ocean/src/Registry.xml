@@ -771,7 +771,32 @@
 			description="Time between forcing inputs"
 			possible_values="'YYYY-MM-DD_HH:MM:SS"
 		/>
-	</nml_record>
+
+		<nml_option name="config_use_time_varying_surface_flux_forcing" type="logical" default_value=".false."
+			description="If true calculate input forcing fields."
+			possible_values=".true. or .false."
+		/>
+		<nml_option name="config_time_varying_surface_flux_forcing_start_time" type="character" default_value="0001-01-01_00:00:00"
+			description="Forcing time to use at the simulation start time"
+			possible_values="'YYYY-MM-DD_HH:MM:SS"
+		/>
+		<nml_option name="config_time_varying_surface_flux_forcing_reference_time" type="character" default_value="0001-01-01_00:00:00"
+			description="Reference time for the forcing"
+			possible_values="'YYYY-MM-DD_HH:MM:SS"
+		/>
+		<nml_option name="config_time_varying_surface_flux_forcing_cycle_start" type="character" default_value="0001-01-01_00:00:00"
+			description="Start time for the forcing cycle."
+			possible_values="'YYYY-MM-DD_HH:MM:SS"
+		/>
+		<nml_option name="config_time_varying_surface_flux_forcing_cycle_duration" type="character" default_value="2-00-00_00:00:00"
+			description="Duration of the forcing cycle."
+			possible_values="'YYYY-MM-DD_HH:MM:SS"
+		/>
+		<nml_option name="config_time_varying_surface_flux_forcing_interval" type="character" default_value="01:00:00"
+			description="Time between forcing inputs"
+			possible_values="'YYYY-MM-DD_HH:MM:SS"
+		/>
+        </nml_record>
 	<nml_record name="coupling" mode="init;forward">
 		<nml_option name="config_ssh_grad_relax_timescale" type="real" default_value="0.0" units="seconds"
 					description="Timescale for relaxation of the ssh gradient for coupling. A value of 0.0 (default) removes any relaxation and gives instantaneous response."
@@ -1994,6 +2019,30 @@
 			<var name="landIcePressureForcing"/>
 			<var name="landIceFractionForcing"/>
 			<var name="landIceDraftForcing"/>
+		</stream>
+                <stream name="surface_flux_forcing"
+				type="input"
+				filename_template="surface_flux_forcing.nc"
+				filename_interval="none"
+				input_interval="none"
+				immutable="true">
+                        <var name="latentHeatFlux"/>
+                        <var name="sensibleHeatFlux"/>
+                        <var name="longWaveHeatFluxUp"/>
+                        <var name="longWaveHeatFluxDown"/>
+                        <var name="seaIceHeatFlux"/>
+                        <var name="icebergHeatFlux"/>
+                        <var name="shortWaveHeatFlux"/>
+                        <var name="rainFlux"/>
+                        <var name="snowFlux"/>
+                        <var name="iceRunoffFlux"/>
+                        <var name="evaporationFlux"/>
+                        <var name="seaIceFreshWaterFlux"/>
+                        <var name="icebergFreshWaterFlux"/>
+                        <var name="riverRunoffFlux"/>
+                        <var name="seaIceSalinityFlux"/>
+                        <var name="windStressZonal"/>
+                        <var name="windStressMeridional"/>
 		</stream>
 
 		<!-- Diagnostics streams for forward mode -->
