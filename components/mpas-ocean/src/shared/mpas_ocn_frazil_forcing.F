@@ -525,7 +525,8 @@ contains
 
             ! layer thickness decreased due to creation of frazil
             ! note: -- this has to be density (not rho_sw) to keep buoyancy equal
-            frazilLayerThicknessTendency(k,iCell) = - newFrazilIceThickness * config_frazil_ice_density / density(k,iCell) / dt
+            !frazilLayerThicknessTendency(k,iCell) = - newFrazilIceThickness * config_frazil_ice_density / density(k,iCell) / dt ! AKT
+            frazilLayerThicknessTendency(k,iCell) = - newFrazilIceThickness * config_frazil_ice_density / rho_sw  / dt
 
             ! salt is extracted with the frazil
             frazilSalinityTendency(k,iCell) = - newThicknessWeightedSaltContent / dt

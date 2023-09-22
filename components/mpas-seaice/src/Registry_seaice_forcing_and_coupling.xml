@@ -199,6 +199,11 @@
 		     dimensions="nCells Time"
 		     units="kg m-2 s-1"
 		/>
+		<var name="frazilMassFlux"
+		     type="real"
+		     dimensions="nCells Time"
+		     units="kg m-2 s-1"
+		/>
 		<var name="uOceanVelocity"
 		     type="real"
 		     dimensions="nCells Time"

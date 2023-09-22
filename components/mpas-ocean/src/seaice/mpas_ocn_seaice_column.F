@@ -23,6 +23,7 @@ module ocn_seaice_column
   use mpas_pool_routines
   use mpas_log
   use mpas_timekeeping
+  use ocn_config
 
   implicit none
   private
@@ -31,7 +32,8 @@ module ocn_seaice_column
        ocn_seaice_setup_packages, &
        ocn_seaice_init, &
        ocn_seaice_run, &
-       ocn_seaice_finalize
+       ocn_seaice_finalize, &
+       ocn_seaice_couple_ocn_to_ice
 
 !***********************************************************************
 
@@ -127,7 +129,7 @@ contains
     ! set up sea ice forcing
     call mpas_log_write(" Initialize sea ice forcing...")
     call seaice_prepare_atmospheric_variables(domain, currentTime)
-    call seaice_prepare_oceanic_variables(domain, .true.)
+    !call seaice_prepare_oceanic_variables(domain, .true.)
 
   end subroutine ocn_seaice_init!}}}
 
@@ -145,7 +147,12 @@ contains
 
   subroutine ocn_seaice_run(domain)!{{{
 
+    use seaice_forcing, only: &
+         seaice_prepare_atmospheric_variables, &
+         seaice_prepare_oceanic_variables
+
     use seaice_column, only: &
+         seaice_column_reinitialize_fluxes, &
          seaice_column_reinitialize_diagnostics_thermodynamics, &
          seaice_column_reinitialize_diagnostics_bgc, &
          seaice_column_predynamics_time_integration, &
@@ -156,6 +163,9 @@ contains
 
     type (MPAS_timeInterval_type) :: &
          timeStep
+
+    type (MPAS_time_type) :: &
+         currentTime
 
     real(kind=RKIND) :: &
          dt
@@ -168,8 +178,15 @@ contains
     timeStep = mpas_get_clock_timestep(domain % clock, ierr=ierr)
     call mpas_get_timeInterval(timeStep, dt=dt)
 
+    ! prepare atmospheric forcing
+    currentTime = MPAS_get_clock_time(domain % clock, MPAS_NOW, ierr=ierr)
+    call seaice_prepare_atmospheric_variables(domain, currentTime)
+
+    ! reinitialize fluxes
+    call seaice_column_reinitialize_fluxes(domain)
+
     ! couple ocean to sea ice
-    call ocn_seaice_couple_ocn_to_ice(domain)
+    !call ocn_seaice_couple_ocn_to_ice(domain)
 
     ! reinitialize diagnostics
     call seaice_column_reinitialize_diagnostics_thermodynamics(domain)
@@ -381,8 +398,9 @@ contains
                (1.0_RKIND - albedoIRDiffuseOcean     (iCell)) * shortwaveIRDiffuseDown     (iCell)
 
           longWaveHeatFluxUp(iCell) = -emissivity * seaiceStefanBoltzmann * seaSurfaceTemperatureK**4
-          sensibleHeatFlux  (iCell) = sensibleTransferCoefficient * potentialTemperatureDifference
-          latentHeatFlux    (iCell) = latentTransferCoefficient   * specificHumidityDifference
+          sensibleHeatFlux(iCell) = sensibleTransferCoefficient * potentialTemperatureDifference
+
+          latentHeatFlux(iCell) = latentTransferCoefficient   * specificHumidityDifference
 
           longWaveHeatFluxDown(iCell) = longwaveDown(iCell)
 
@@ -456,6 +474,7 @@ contains
     real (kind=RKIND), dimension(:), pointer :: &
          iceAreaCell,  &
          oceanHeatFlux, &
+         oceanHeatFluxArea, &
          oceanShortwaveFlux, &
          oceanFreshWaterFlux, &
          oceanSaltFlux,  &
@@ -471,7 +490,14 @@ contains
          seaIceFreshWaterFluxField, &
          seaIceSalinityFluxField, &
          windStressZonalField, &
-         windStressMeridionalField
+         windStressMeridionalField, &
+         longWaveHeatFluxUpField, &
+         longWaveHeatFluxDownField, &
+         sensibleHeatFluxField, &
+         latentHeatFluxField, &
+         rainFluxField, &
+         snowFluxField, &
+         evaporationFluxField
 
     real (kind=RKIND), dimension(:), pointer :: &
          !iceFraction, &
@@ -480,7 +506,14 @@ contains
          seaIceFreshWaterFlux, &
          seaIceSalinityFlux, &
          windStressZonal, &
-         windStressMeridional
+         windStressMeridional, &
+         longWaveHeatFluxUp, &
+         longWaveHeatFluxDown, &
+         sensibleHeatFlux, &
+         latentHeatFlux, &
+         rainFlux, &
+         snowFlux, &
+         evaporationFlux
 
     real(kind=RKIND) :: &
          ailohi, &
@@ -518,6 +551,7 @@ contains
        call MPAS_pool_get_array(velocitySolverPool, 'oceanStressCellV', oceanStressCellV)
 
        call MPAS_pool_get_array(oceanFluxesPool, 'oceanHeatFlux', oceanHeatFlux)
+       call MPAS_pool_get_array(oceanFluxesPool, 'oceanHeatFluxArea', oceanHeatFluxArea)
        call MPAS_pool_get_array(oceanFluxesPool, 'oceanShortwaveFlux', oceanShortwaveFlux)
        call MPAS_pool_get_array(oceanFluxesPool, 'oceanFreshWaterFlux', oceanFreshWaterFlux)
        call MPAS_pool_get_array(oceanFluxesPool, 'oceanSaltFlux', oceanSaltFlux)
@@ -532,6 +566,14 @@ contains
        call mpas_pool_get_field(forcingPool, 'seaIceFreshWaterFlux', seaIceFreshWaterFluxField)
        call mpas_pool_get_field(forcingPool, 'seaIceSalinityFlux', seaIceSalinityFluxField)
 
+       call mpas_pool_get_field(forcingPool, 'longWaveHeatFluxUp', longWaveHeatFluxUpField)
+       call mpas_pool_get_field(forcingPool, 'longWaveHeatFluxDown', longWaveHeatFluxDownField)
+       call mpas_pool_get_field(forcingPool, 'sensibleHeatFlux', sensibleHeatFluxField)
+       call mpas_pool_get_field(forcingPool, 'latentHeatFlux', latentHeatFluxField)
+       call mpas_pool_get_field(forcingPool, 'rainFlux', rainFluxField)
+       call mpas_pool_get_field(forcingPool, 'snowFlux', snowFluxField)
+       call mpas_pool_get_field(forcingPool, 'evaporationFlux', evaporationFluxField)
+
        call mpas_pool_get_field(forcingPool, 'windStressZonal', windStressZonalField)
        call mpas_pool_get_field(forcingPool, 'windStressMeridional', windStressMeridionalField)
 
@@ -544,6 +586,14 @@ contains
        windStressZonal => windStressZonalField % array
        windStressMeridional => windStressMeridionalField % array
 
+       longWaveHeatFluxUp => longWaveHeatFluxUpField % array
+       longWaveHeatFluxDown => longWaveHeatFluxDownField % array
+       sensibleHeatFlux => sensibleHeatFluxField % array
+       latentHeatFlux => latentHeatFluxField % array
+       rainFlux => rainFluxField % array
+       snowFlux => snowFluxField % array
+       evaporationFlux => evaporationFluxField % array
+
        do i = 1, nCellsSolve
 
           ailohi = min(iceAreaCell(i), 1.0_RKIND)
@@ -552,7 +602,7 @@ contains
           !   iceFraction(i) = ailohi
           !end if
           if ( seaIceHeatFluxField % isActive ) then
-             seaIceHeatFlux(i) = oceanHeatFlux(i)
+             seaIceHeatFlux(i) = oceanHeatFluxArea(i)
           endif
           if ( shortWaveHeatFluxField % isActive ) then
              shortWaveHeatFlux(i) = shortWaveHeatFlux(i)  * (1.0_RKIND - ailohi) + &
@@ -560,14 +610,15 @@ contains
           endif
           if ( seaIceFreshWaterFluxField % isActive ) then
              if (ailohi > 0.0_RKIND) then
-                seaIceFreshWaterFlux(i) = oceanFreshWaterFlux(i) + frazilMassAdjust(i)/ailohi
+                seaIceFreshWaterFlux(i) = oceanFreshWaterFlux(i) * ailohi + frazilMassAdjust(i)!/ailohi
              else
                 seaIceFreshWaterFlux(i) = 0.0_RKIND
              endif
           endif
           if ( seaIceSalinityFluxField % isActive ) then
+             seaIceSalinityFlux(i) = 0.0_RKIND
              if (ailohi > 0.0_RKIND) then
-                seaIceSalinityFlux(i) = oceanSaltFlux(i) + ice_ref_salinity*p001*frazilMassAdjust(i)/ailohi
+                seaIceSalinityFlux(i) = oceanSaltFlux(i) * ailohi + ice_ref_salinity*p001*frazilMassAdjust(i)!/ailohi
              else
                 seaIceSalinityFlux(i) = 0.0_RKIND
              endif
@@ -594,6 +645,29 @@ contains
           if ( windStressMeridionalField % isActive ) then
              windStressMeridional(i) = windStressMeridional(i) * (1.0_RKIND - ailohi) + &
                                        tauyo                   * ailohi
+          endif
+
+
+          if ( longWaveHeatFluxUpField % isActive ) then
+             longWaveHeatFluxUp(i) = longWaveHeatFluxUp(i) * (1.0_RKIND - ailohi)
+          endif
+          if ( longWaveHeatFluxDownField % isActive ) then
+             longWaveHeatFluxDown(i) = longWaveHeatFluxDown(i) * (1.0_RKIND - ailohi)
+          endif
+          if ( sensibleHeatFluxField % isActive ) then
+             sensibleHeatFlux(i) = sensibleHeatFlux(i) * (1.0_RKIND - ailohi)
+          endif
+          if ( latentHeatFluxField % isActive ) then
+             latentHeatFlux(i) = latentHeatFlux(i) * (1.0_RKIND - ailohi)
+          endif
+          if ( rainFluxField % isActive ) then
+             rainFlux(i) = rainFlux(i) * (1.0_RKIND - ailohi)
+          endif
+          if ( snowFluxField % isActive ) then
+             snowFlux(i) = snowFlux(i) * (1.0_RKIND - ailohi)
+          endif
+          if ( evaporationFluxField % isActive ) then
+             evaporationFlux(i) = evaporationFlux(i) * (1.0_RKIND - ailohi)
           endif
 
        enddo ! i
@@ -626,6 +700,28 @@ contains
     if ( windStressZonalField % isActive ) then
        call mpas_dmpar_exch_halo_field(windStressZonalField)
     end if
+
+    if ( longWaveHeatFluxUpField % isActive ) then
+       call mpas_dmpar_exch_halo_field(longWaveHeatFluxUpField)
+    endif
+    if ( longWaveHeatFluxDownField % isActive ) then
+       call mpas_dmpar_exch_halo_field(longWaveHeatFluxDownField)
+    endif
+    if ( sensibleHeatFluxField % isActive ) then
+       call mpas_dmpar_exch_halo_field(sensibleHeatFluxField)
+    endif
+    if ( latentHeatFluxField % isActive ) then
+       call mpas_dmpar_exch_halo_field(latentHeatFluxField)
+    endif
+    if ( rainFluxField % isActive ) then
+       call mpas_dmpar_exch_halo_field(rainFluxField)
+    endif
+    if ( snowFluxField % isActive ) then
+       call mpas_dmpar_exch_halo_field(snowFluxField)
+    endif
+    if ( evaporationFluxField % isActive ) then
+       call mpas_dmpar_exch_halo_field(evaporationFluxField)
+    endif
 
   end subroutine ocn_seaice_couple_ice_to_ocn
 
@@ -685,7 +781,6 @@ contains
          i
 
     real (kind=RKIND) :: &
-         frazilMassFlux, &
          frazilMassFluxRev, &
          surfaceFreezingTemp
 
@@ -712,6 +807,7 @@ contains
          seaFreezingTemperature,      &
          freezingMeltingPotential,    &
          frazilMassAdjust,            &
+         frazilMassFlux,              &
          uOceanVelocity,              &
          vOceanVelocity,              &
          seaSurfaceTiltU,             &
@@ -727,6 +823,8 @@ contains
     real (kind=RKIND), dimension(:), pointer :: &
          seaIceEnergy, &
          accumulatedFrazilIceMass, &
+         accumulatedFrazilIceMassNew, &
+         accumulatedFrazilIceMassOld, &
          frazilSurfacePressure, &
          filteredSSHGradientZonal, &
          filteredSSHGradientMeridional
@@ -790,6 +888,7 @@ contains
        call mpas_pool_get_array(oceanCoupling, 'seaFreezingTemperature', seaFreezingTemperature)
        call mpas_pool_get_array(oceanCoupling, 'freezingMeltingPotential', freezingMeltingPotential)
        call mpas_pool_get_array(oceanCoupling, 'frazilMassAdjust', frazilMassAdjust)
+       call mpas_pool_get_array(oceanCoupling, 'frazilMassFlux', frazilMassFlux)
        call mpas_pool_get_array(oceanCoupling, 'uOceanVelocity', uOceanVelocity)
        call mpas_pool_get_array(oceanCoupling, 'vOceanVelocity', vOceanVelocity)
        call mpas_pool_get_array(oceanCoupling, 'seaSurfaceTiltU', seaSurfaceTiltU)
@@ -885,7 +984,7 @@ contains
 
              freezingMeltingPotential(i) = Fioo_q
 
-             frazilMassFlux              = Fioo_frazil
+             frazilMassFlux(i)           = Fioo_frazil
 
              ! Now determine the sea ice mass associated with the frazil heat flux given when
              ! freezingMeltingPotential(i) is positive. This produces a revised mass flux, given
@@ -894,10 +993,13 @@ contains
              ! coupling step as a freshwater and salt flux. This step is required to balance mass
              ! and heat with the ocean.
 
-             call frazil_mass(freezingMeltingPotential(i), frazilMassFluxRev, seaSurfaceSalinity(i), &
+             call frazil_mass(&
+                  freezingMeltingPotential(i), &
+                  frazilMassFluxRev, &
+                  seaSurfaceSalinity(i), &
                   config_thermodynamics_type)
 
-             frazilMassAdjust(i) = frazilMassFlux-frazilMassFluxRev
+             frazilMassAdjust(i) = frazilMassFlux(i)-frazilMassFluxRev
 
              if (Fioo_frazil > 0.0_RKIND) then
                 call MPAS_log_write("Frazil: $r $r", realArgs=(/freezingMeltingPotential(i),frazilMassAdjust(i)/))

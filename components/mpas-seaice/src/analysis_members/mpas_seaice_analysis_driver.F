@@ -152,7 +152,7 @@ contains
       call mpas_pool_add_config(analysisMemberList, 'temperatures', 1)
       call mpas_pool_add_config(analysisMemberList, 'regionalStatistics', 1)
       call mpas_pool_add_config(analysisMemberList, 'ridgingDiagnostics', 1)
-      call mpas_pool_add_config(analysisMemberList, 'conservationCheck', 1)
+      !call mpas_pool_add_config(analysisMemberList, 'conservationCheck', 1)
       call mpas_pool_add_config(analysisMemberList, 'geographicalVectors', 1)
       call mpas_pool_add_config(analysisMemberList, 'loadBalance', 1)
       call mpas_pool_add_config(analysisMemberList, 'maximumIcePresence', 1)

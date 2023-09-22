@@ -768,6 +768,7 @@ module ocn_forward_mode
 
 #ifdef SEAICE_COLUMN
          ! Run sea ice column package time step
+         call mpas_log_write( '   ocn_seaice_run')
          call ocn_seaice_run(domain)
 #endif
 
@@ -795,10 +796,6 @@ module ocn_forward_mode
          call seaice_analysis_compute(domain, err)
          call seaice_analysis_restart(domain, err)
          call seaice_analysis_write(domain, err)
-#endif
-
-#ifdef SEAICE_COLUMN
-         call seaice_column_reinitialize_fluxes(domain)
 #endif
 
 #ifdef MPAS_DEBUG
@@ -883,6 +880,10 @@ module ocn_forward_mode
 
          ! Validate that the state is OK to run with for the next timestep.
          call ocn_validate_state(domain, timeLevel=1)
+
+#ifdef SEAICE_COLUMN
+         call ocn_seaice_couple_ocn_to_ice(domain)
+#endif
 
       end do
 
