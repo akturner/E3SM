@@ -2662,6 +2662,14 @@ Valid values:
 Default: Defined in namelist_defaults.xml
 </entry>
 
+<entry id="config_improved_seaice_ocean_coupling" type="logical"
+        category="ocean" group="ocean">
+Use improved sea ice ocean coupling
+
+Valid values: true or false
+Default: Defined in namelist_defaults.xml
+</entry>
+
 
 <!-- diagnostics -->
 

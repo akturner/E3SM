@@ -23,6 +23,8 @@ module mpassi_cpl_indices
   integer :: index_i2x_Si_anidf        ! albedo: near ir, diffuse        
   integer :: index_i2x_Si_u10          ! 10m wind
   integer :: index_i2x_Si_u10withgusts ! 10m wind root-mean-square magnitude with gustiness
+  integer :: index_i2x_Si_uSeaIceVelocity ! u component of sea ice velocity
+  integer :: index_i2x_Si_vSeaIceVelocity ! v component of sea ice velocity
   integer :: index_i2x_Faii_lwup       ! upward longwave heat flux  
   integer :: index_i2x_Faii_lat        ! latent          heat flux  
   integer :: index_i2x_Faii_sen        ! sensible        heat flux      
@@ -155,6 +157,9 @@ contains
     index_i2x_Si_snowh      = mct_avect_indexra(i2x,'Si_snowh')
     index_i2x_Si_u10        = mct_avect_indexra(i2x,'Si_u10')
     index_i2x_Si_u10withgusts = mct_avect_indexra(i2x,'Si_u10withgusts')
+    index_i2x_Si_uSeaIceVelocity = mct_avect_indexra(i2x,'Si_uSeaIceVelocity')
+    index_i2x_Si_vSeaIceVelocity = mct_avect_indexra(i2x,'Si_vSeaIceVelocity')
+
     index_i2x_Faii_taux     = mct_avect_indexra(i2x,'Faii_taux')
     index_i2x_Faii_tauy     = mct_avect_indexra(i2x,'Faii_tauy')
     index_i2x_Faii_lat      = mct_avect_indexra(i2x,'Faii_lat')

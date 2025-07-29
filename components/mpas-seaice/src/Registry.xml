@@ -1864,6 +1864,11 @@
 			possible_values=""
 			icepack_name="dragio"
 		/>
+		<nml_option name="config_improved_seaice_ocean_coupling" type="logical" default_value="false"
+			description="Use improved sea ice ocean coupling"
+			possible_values="true or false"
+		/>
+
 	</nml_record>
 
 	<nml_record name="diagnostics" in_defaults="true">

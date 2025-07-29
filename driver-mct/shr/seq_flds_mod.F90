@@ -1313,6 +1313,24 @@ contains
     attname  = 'u10withgusts'
     call metadata_set(attname, longname, stdname, units)
 
+    ! Zonal sea ice velocity
+    call seq_flds_add(i2x_states,"Si_uSeaIceVelocity")
+    call seq_flds_add(x2o_states,"So_uSeaIceVelocity")
+    longname = 'Zonal sea ice velocity'
+    stdname  = ''
+    units    = 'm s-1'
+    attname  = 'uSeaIceVelocity'
+    call metadata_set(attname, longname, stdname, units)
+
+    ! Meridional sea ice velocity
+    call seq_flds_add(i2x_states,"Si_vSeaIceVelocity")
+    call seq_flds_add(x2o_states,"So_vSeaIceVelocity")
+    longname = 'Meridonal sea ice velocity'
+    stdname  = ''
+    units    = 'm s-1'
+    attname  = 'vSeaIceVelocity'
+    call metadata_set(attname, longname, stdname, units)
+
     ! Zonal surface stress"
     call seq_flds_add(l2x_fluxes,"Fall_taux")
     call seq_flds_add(xao_fluxes,"Faox_taux")

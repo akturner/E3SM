@@ -3206,6 +3206,11 @@ contains
     call ocean_stress_final(domain)
     call mpas_timer_stop("ocn stress final")
 
+    ! calculate sea ice velocity on cells
+    call mpas_timer_start("velocity on cells")
+    call seaice_velocity_on_cell(domain)
+    call mpas_timer_stop("velocity on cells")
+
   end subroutine velocity_solver_post_subcycle
 
 !|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -3666,6 +3671,69 @@ contains
     endif ! configUseOceanStress
 
   end subroutine ocean_stress_final
+
+  !|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  !
+  !  seaice_velocity_on_cell
+  !
+  !> \brief
+  !> \author Adrian K. Turner, LANL
+  !> \date 7th July 2025
+  !> \details
+  !>
+  !
+  !-----------------------------------------------------------------------
+
+  subroutine seaice_velocity_on_cell(domain)
+
+    use seaice_mesh, only: &
+         seaice_interpolate_vertex_to_cell
+
+    type(domain_type), intent(inout) :: &
+         domain
+
+    logical, pointer :: &
+         config_improved_seaice_ocean_coupling
+
+    type(block_type), pointer :: &
+         blockPtr
+
+    type(MPAS_pool_type), pointer :: &
+         velocitySolverPool, &
+         meshPool, &
+         boundaryPool
+
+    real(kind=RKIND), dimension(:), pointer :: &
+         uVelocity, &
+         vVelocity, &
+         uVelocityCell, &
+         vVelocityCell
+
+    call MPAS_pool_get_config(domain % configs, &
+         "config_improved_seaice_ocean_coupling", config_improved_seaice_ocean_coupling)
+    if (config_improved_seaice_ocean_coupling) then
+
+       blockPtr => domain % blocklist
+       do while (associated(blockPtr))
+
+          call MPAS_pool_get_subpool(blockPtr % structs, "velocity_solver", velocitySolverPool)
+          call MPAS_pool_get_subpool(blockPtr % structs, "mesh", meshPool)
+          call MPAS_pool_get_subpool(blockPtr % structs, "boundary", boundaryPool)
+
+          call MPAS_pool_get_array(velocitySolverPool, "uVelocity", uVelocity)
+          call MPAS_pool_get_array(velocitySolverPool, "vVelocity", vVelocity)
+          call MPAS_pool_get_array(velocitySolverPool, "uVelocityCell", uVelocityCell)
+          call MPAS_pool_get_array(velocitySolverPool, "vVelocityCell", vVelocityCell)
+
+          call seaice_interpolate_vertex_to_cell(meshPool, boundaryPool, uVelocityCell, uVelocity)
+          call seaice_interpolate_vertex_to_cell(meshPool, boundaryPool, vVelocityCell, vVelocity)
+
+          blockPtr => blockPtr % next
+       end do
+
+    endif
+
+  end subroutine seaice_velocity_on_cell
 
   !-----------------------------------------------------------------------
 

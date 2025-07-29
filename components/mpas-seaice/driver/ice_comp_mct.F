@@ -2713,7 +2713,8 @@ contains
       config_use_zaerosols,              &
       config_couple_biogeochemistry_fields, &
       config_use_column_shortwave,       &
-      config_use_data_icebergs
+      config_use_data_icebergs,          &
+      config_improved_seaice_ocean_coupling
 
    real(kind=RKIND), pointer :: &
       sphere_radius
@@ -2731,6 +2732,8 @@ contains
       pondLidThicknessCell,        &
       pondAreaCell,                &
       surfaceTemperatureCell,      &
+      uVelocityCell,               &
+      vVelocityCell,               &
       airStressCellU,              &
       airStressCellV,              &
       oceanStressCellU,            &
@@ -2789,6 +2792,7 @@ contains
       call mpas_pool_get_config(configs, "config_couple_biogeochemistry_fields", config_couple_biogeochemistry_fields)
       call MPAS_pool_get_config(configs, "config_use_column_shortwave", config_use_column_shortwave)
       call MPAS_pool_get_config(configs, "config_use_data_icebergs", config_use_data_icebergs)
+      call MPAS_pool_get_config(configs, "config_improved_seaice_ocean_coupling", config_improved_seaice_ocean_coupling)
 
       call MPAS_pool_get_subpool(block_ptr % structs, 'mesh', meshPool)
       call MPAS_pool_get_subpool(block_ptr % structs, "tracers_aggregate", tracersAggregate)
@@ -2819,6 +2823,10 @@ contains
       call MPAS_pool_get_array(velocitySolver, 'airStressCellV', airStressCellV)
       call MPAS_pool_get_array(velocitySolver, 'oceanStressCellU', oceanStressCellU)
       call MPAS_pool_get_array(velocitySolver, 'oceanStressCellV', oceanStressCellV)
+      if (config_improved_seaice_ocean_coupling) then
+         call MPAS_pool_get_array(velocitySolver, 'uVelocityCell', uVelocityCell)
+         call MPAS_pool_get_array(velocitySolver, 'vVelocityCell', vVelocityCell)
+      endif ! config_improved_seaice_ocean_coupling
 
       call MPAS_pool_get_array(shortwave, 'albedoVisibleDirectCell', albedoVisibleDirectCell)
       call MPAS_pool_get_array(shortwave, 'albedoIRDirectCell', albedoIRDirectCell)
@@ -2942,6 +2950,10 @@ contains
             i2x_i % rAttr(index_i2x_Si_qref  ,n)  = atmosReferenceHumidity2m(i)
             i2x_i % rAttr(index_i2x_Si_snowh ,n)  = snowVolumeCell(i) / ailohi
             i2x_i % rAttr(index_i2x_Si_ithick,n)  = iceVolumeCell(i) / ailohi
+            if (config_improved_seaice_ocean_coupling) then
+               i2x_i % rAttr(index_i2x_Si_uSeaIceVelocity ,n) = uVelocityCell(i)
+               i2x_i % rAttr(index_i2x_Si_vSeaIceVelocity ,n) = vVelocityCell(i)
+            endif ! config_improved_seaice_ocean_coupling
 
             !--- a/i fluxes computed by ice
             i2x_i % rAttr(index_i2x_Faii_taux ,n) = tauxa
@@ -3323,7 +3335,8 @@ contains
          config_use_zaerosols,              &
          config_use_column_shortwave,       &
          config_use_data_icebergs,          &
-         config_couple_biogeochemistry_fields
+         config_couple_biogeochemistry_fields, &
+         config_improved_seaice_ocean_coupling
 
       real(kind=RKIND), pointer :: &
          sphere_radius
@@ -3341,6 +3354,8 @@ contains
          pondLidThicknessCell,        &
          pondAreaCell,                &
          surfaceTemperatureCell,      &
+         uVelocityCell,               &
+         vVelocityCell,               &
          airStressCellU,              &
          airStressCellV,              &
          oceanStressCellU,            &
@@ -3403,6 +3418,7 @@ contains
          call mpas_pool_get_config(configs, "config_couple_biogeochemistry_fields", config_couple_biogeochemistry_fields)
          call MPAS_pool_get_config(configs, "config_use_column_shortwave", config_use_column_shortwave)
          call MPAS_pool_get_config(configs, "config_use_data_icebergs", config_use_data_icebergs)
+         call MPAS_pool_get_config(configs, "config_improved_seaice_ocean_coupling", config_improved_seaice_ocean_coupling)
 
          call MPAS_pool_get_subpool(block_ptr % structs, 'mesh', meshPool)
          call MPAS_pool_get_subpool(block_ptr % structs, "tracers_aggregate", tracersAggregate)
@@ -3433,6 +3449,10 @@ contains
          call MPAS_pool_get_array(velocitySolver, 'airStressCellV', airStressCellV)
          call MPAS_pool_get_array(velocitySolver, 'oceanStressCellU', oceanStressCellU)
          call MPAS_pool_get_array(velocitySolver, 'oceanStressCellV', oceanStressCellV)
+         if (config_improved_seaice_ocean_coupling) then
+            call MPAS_pool_get_array(velocitySolver, 'uVelocityCell', uVelocityCell)
+            call MPAS_pool_get_array(velocitySolver, 'vVelocityCell', vVelocityCell)
+         endif ! config_improved_seaice_ocean_coupling
 
          call MPAS_pool_get_array(shortwave, 'albedoVisibleDirectCell', albedoVisibleDirectCell)
          call MPAS_pool_get_array(shortwave, 'albedoIRDirectCell', albedoIRDirectCell)
@@ -3554,6 +3574,10 @@ contains
                i2x_im(n, index_i2x_Si_tref)  = atmosReferenceTemperature2m(i)
                i2x_im(n, index_i2x_Si_qref)  = atmosReferenceHumidity2m(i)
                i2x_im(n, index_i2x_Si_snowh)  = snowVolumeCell(i) / ailohi
+               if (config_improved_seaice_ocean_coupling) then
+                  i2x_im(n, index_i2x_Si_uSeaIceVelocity ) = uVelocityCell(i)
+                  i2x_im(n, index_i2x_Si_vSeaIceVelocity ) = vVelocityCell(i)
+               endif ! config_improved_seaice_ocean_coupling
 
                !--- a/i fluxes computed by ice
                i2x_im(n, index_i2x_Faii_taux) = tauxa
