@@ -2685,6 +2685,8 @@ contains
       tauya,           &
       tauxo,           &
       tauyo,           &
+      uVel,            &
+      vVel,            &
       basalPressure
 
    type (block_type), pointer :: &
@@ -2931,6 +2933,22 @@ contains
               sphere_radius,        &
               config_rotate_cartesian_grid)
 
+         ! sea ice cell velocity
+         if (config_improved_seaice_ocean_coupling) then
+            call seaice_latlon_vector_rotation_backward(&
+              uVel,                 &
+              vVel,                 &
+              uVelocityCell(i),     &
+              vVelocityCell(i),     &
+              latCell(i),           &
+              lonCell(i),           &
+              xCell(i),             &
+              yCell(i),             &
+              zCell(i),             &
+              sphere_radius,        &
+              config_rotate_cartesian_grid)
+         endif ! config_improved_seaice_ocean_coupling
+
          !-------states--------------------
          i2x_i % rAttr(index_i2x_Si_ifrac ,n)    = ailohi
 
@@ -2951,8 +2969,8 @@ contains
             i2x_i % rAttr(index_i2x_Si_snowh ,n)  = snowVolumeCell(i) / ailohi
             i2x_i % rAttr(index_i2x_Si_ithick,n)  = iceVolumeCell(i) / ailohi
             if (config_improved_seaice_ocean_coupling) then
-               i2x_i % rAttr(index_i2x_Si_uSeaIceVelocity ,n) = uVelocityCell(i)
-               i2x_i % rAttr(index_i2x_Si_vSeaIceVelocity ,n) = vVelocityCell(i)
+               i2x_i % rAttr(index_i2x_Si_uSeaIceVelocity ,n) = uVel
+               i2x_i % rAttr(index_i2x_Si_vSeaIceVelocity ,n) = vVel
             endif ! config_improved_seaice_ocean_coupling
 
             !--- a/i fluxes computed by ice
@@ -3307,6 +3325,8 @@ contains
          tauya,           &
          tauxo,           &
          tauyo,           &
+         uVel,            &
+         vVel,            &
          basalPressure
 
       type (block_type), pointer :: &
@@ -3556,6 +3576,22 @@ contains
                   sphere_radius,        &
                   config_rotate_cartesian_grid)
 
+         ! sea ice cell velocity
+         if (config_improved_seaice_ocean_coupling) then
+            call seaice_latlon_vector_rotation_backward(&
+              uVel,                 &
+              vVel,                 &
+              uVelocityCell(i),     &
+              vVelocityCell(i),	    &
+              latCell(i),           &
+              lonCell(i),           &
+              xCell(i),             &
+              yCell(i),             &
+              zCell(i),             &
+              sphere_radius,        &
+              config_rotate_cartesian_grid)
+         endif ! config_improved_seaice_ocean_coupling
+
             !-------states--------------------
             i2x_im(n, index_i2x_Si_ifrac)    = ailohi
 
@@ -3575,8 +3611,8 @@ contains
                i2x_im(n, index_i2x_Si_qref)  = atmosReferenceHumidity2m(i)
                i2x_im(n, index_i2x_Si_snowh)  = snowVolumeCell(i) / ailohi
                if (config_improved_seaice_ocean_coupling) then
-                  i2x_im(n, index_i2x_Si_uSeaIceVelocity ) = uVelocityCell(i)
-                  i2x_im(n, index_i2x_Si_vSeaIceVelocity ) = vVelocityCell(i)
+                  i2x_im(n, index_i2x_Si_uSeaIceVelocity ) = uVel
+                  i2x_im(n, index_i2x_Si_vSeaIceVelocity ) = vVel
                endif ! config_improved_seaice_ocean_coupling
 
                !--- a/i fluxes computed by ice
